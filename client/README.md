@@ -29,10 +29,20 @@ Outputs static assets to `dist/`, which the server serves in production.
 
 ## Structure
 
-- `src/App.jsx` — root component.
-- `src/main.jsx` — React entry point.
+- `src/App.jsx` — route definitions, wrapped in `EventProvider`.
+- `src/main.jsx` — React entry point, wraps `App` in `BrowserRouter`.
 - `src/index.css` — Tailwind entry point (`@import "tailwindcss";`).
+- `src/context/EventContext.jsx` — global event state (create/join/leave),
+  backed by `src/hooks/useEventCode.js` (localStorage persistence per
+  docs/SDD.md §3).
+- `src/lib/api.js` — thin fetch wrapper for the `/api` backend.
+- `src/layouts/DashboardLayout.jsx` — guards `/event/*` routes, redirects
+  to `/` if there's no valid active event, renders `BottomNav` + tab
+  content.
+- `src/pages/` — `LandingPage` (create/join) and one page per dashboard
+  tab (`LeaderboardPage`, `GamesPage`, `BonusPage`, `HistoryPage`,
+  `SettingsPage`). Tab content is built out in later phases.
 
-Routing, hooks, and dashboard components are added in later phases per
+Player/team/game management UI is added in Phase 4 per
 [docs/implementation_plan.md](../docs/implementation_plan.md).
 

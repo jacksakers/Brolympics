@@ -1,19 +1,31 @@
+import { Route, Routes } from 'react-router-dom'
+import { EventProvider } from './context/EventContext.jsx'
+import LandingPage from './pages/LandingPage.jsx'
+import DashboardLayout from './layouts/DashboardLayout.jsx'
+import LeaderboardPage from './pages/LeaderboardPage.jsx'
+import GamesPage from './pages/GamesPage.jsx'
+import BonusPage from './pages/BonusPage.jsx'
+import HistoryPage from './pages/HistoryPage.jsx'
+import SettingsPage from './pages/SettingsPage.jsx'
+
 /**
- * Root application component.
- *
- * Phase 1 placeholder: confirms the Vite + React + Tailwind setup is
- * working. Routing, auth, and dashboard UI are added in later phases.
+ * Root application component: sets up the event context and top-level
+ * routes. See docs/implementation_plan.md Phase 3.
  */
 function App() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white p-4 text-center dark:bg-gray-900">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-        🏆 Brolympics
-      </h1>
-      <p className="text-gray-500 dark:text-gray-400">
-        Client scaffold ready (Vite + React + Tailwind).
-      </p>
-    </div>
+    <EventProvider>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/event" element={<DashboardLayout />}>
+          <Route index element={<LeaderboardPage />} />
+          <Route path="games" element={<GamesPage />} />
+          <Route path="bonus" element={<BonusPage />} />
+          <Route path="history" element={<HistoryPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+      </Routes>
+    </EventProvider>
   )
 }
 
