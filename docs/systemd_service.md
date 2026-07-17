@@ -1,3 +1,8 @@
+> Implemented in [deploy/](../deploy/) — run `sudo ./deploy/install.sh` to
+> install this automatically with the correct user/path filled in. See
+> [deploy/README.md](../deploy/README.md) for full deployment steps
+> (including the Tailscale Funnel command from docs/SDD.md §2).
+
 [Unit]
 Description=Brolympics Web Application
 After=network.target

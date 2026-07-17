@@ -1,0 +1,17 @@
+[Unit]
+Description=Brolympics Web Application
+After=network.target
+
+[Service]
+# Ensure these match your actual paths and username, or run
+# deploy/install.sh which fills them in automatically.
+User=your_linux_username
+WorkingDirectory=/path/to/your/brolympics/project/server
+ExecStart=/usr/bin/node index.js
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target
