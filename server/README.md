@@ -33,5 +33,8 @@ When `NODE_ENV=production`, the server serves the built client from
 
 - `index.js` — Express app entry point, health check, static file
   serving.
-- `db/` — SQLite connection and (in later phases) schema/migrations. See
+- `db/` — SQLite connection and schema/migrations. See
   [db/README.md](db/README.md).
+- `routes/` — REST API routers (events, teams, players, games,
+  transactions). See [routes/README.md](routes/README.md).
+- `utils/` — small shared helpers (e.g. event code generation).

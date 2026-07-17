@@ -4,6 +4,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import 'dotenv/config'
 import db from './db/index.js'
+import eventsRouter from './routes/events.js'
+import teamsRouter from './routes/teams.js'
+import playersRouter from './routes/players.js'
+import gamesRouter from './routes/games.js'
+import transactionsRouter from './routes/transactions.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -20,6 +25,12 @@ app.get('/api/health', (req, res) => {
   const { result } = db.prepare('SELECT 1 as result').get()
   res.json({ status: 'ok', db: result === 1 })
 })
+
+app.use('/api/events', eventsRouter)
+app.use('/api/teams', teamsRouter)
+app.use('/api/players', playersRouter)
+app.use('/api/games', gamesRouter)
+app.use('/api/transactions', transactionsRouter)
 
 // In production, serve the built Vite client as static assets.
 if (process.env.NODE_ENV === 'production') {

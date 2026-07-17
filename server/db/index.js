@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Database from 'better-sqlite3'
+import { migrate } from './migrate.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -11,5 +12,7 @@ const db = new Database(dbPath)
 
 db.pragma('journal_mode = WAL')
 db.pragma('foreign_keys = ON')
+
+migrate(db)
 
 export default db
