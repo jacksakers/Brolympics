@@ -51,3 +51,89 @@ export async function fetchEventByCode(code) {
     return null
   }
 }
+
+// --- Teams ---------------------------------------------------------------
+
+/** @param {number} eventId */
+export function fetchTeams(eventId) {
+  return request(`/teams?event_id=${eventId}`)
+}
+
+/** @param {{event_id: number, name: string}} data */
+export function createTeam(data) {
+  return request('/teams', { method: 'POST', body: JSON.stringify(data) })
+}
+
+/** @param {number} id @param {{name: string}} data */
+export function updateTeam(id, data) {
+  return request(`/teams/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+/** @param {number} id */
+export function deleteTeam(id) {
+  return request(`/teams/${id}`, { method: 'DELETE' })
+}
+
+// --- Players ---------------------------------------------------------------
+
+/** @param {number} eventId */
+export function fetchPlayers(eventId) {
+  return request(`/players?event_id=${eventId}`)
+}
+
+/** @param {{event_id: number, name: string, team_id?: number|null}} data */
+export function createPlayer(data) {
+  return request('/players', { method: 'POST', body: JSON.stringify(data) })
+}
+
+/** @param {number} id @param {{name?: string, team_id?: number|null}} data */
+export function updatePlayer(id, data) {
+  return request(`/players/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+/** @param {number} id */
+export function deletePlayer(id) {
+  return request(`/players/${id}`, { method: 'DELETE' })
+}
+
+// --- Games ---------------------------------------------------------------
+
+/** @param {number} eventId */
+export function fetchGames(eventId) {
+  return request(`/games?event_id=${eventId}`)
+}
+
+/** @param {{event_id: number, name: string, format: 'team'|'individual', points_config?: object}} data */
+export function createGame(data) {
+  return request('/games', { method: 'POST', body: JSON.stringify(data) })
+}
+
+/** @param {number} id @param {object} data */
+export function updateGame(id, data) {
+  return request(`/games/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+/** @param {number} id */
+export function deleteGame(id) {
+  return request(`/games/${id}`, { method: 'DELETE' })
+}
+
+// --- Transactions ----------------------------------------------------------
+
+/** @param {number} eventId */
+export function fetchTransactions(eventId) {
+  return request(`/transactions?event_id=${eventId}`)
+}
+
+/**
+ * @param {{event_id: number, player_id?: number|null, team_id?: number|null,
+ *   game_id?: number|null, points: number, reason: string}} data
+ */
+export function createTransaction(data) {
+  return request('/transactions', { method: 'POST', body: JSON.stringify(data) })
+}
+
+/** @param {number} id */
+export function revertTransaction(id) {
+  return request(`/transactions/${id}/revert`, { method: 'POST' })
+}

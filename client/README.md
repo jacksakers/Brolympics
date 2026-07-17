@@ -35,14 +35,23 @@ Outputs static assets to `dist/`, which the server serves in production.
 - `src/context/EventContext.jsx` — global event state (create/join/leave),
   backed by `src/hooks/useEventCode.js` (localStorage persistence per
   docs/SDD.md §3).
-- `src/lib/api.js` — thin fetch wrapper for the `/api` backend.
+- `src/lib/api.js` — thin fetch wrapper for the `/api` backend, including
+  CRUD calls for teams/players/games.
+- `src/hooks/useTeams.js`, `usePlayers.js`, `useGames.js` — data fetching
+  + CRUD actions per resource, each refetching from the server after a
+  mutation (stateless frontend, per
+  [docs/coding_guidelines.md](../docs/coding_guidelines.md)).
 - `src/layouts/DashboardLayout.jsx` — guards `/event/*` routes, redirects
   to `/` if there's no valid active event, renders `BottomNav` + tab
   content.
 - `src/pages/` — `LandingPage` (create/join) and one page per dashboard
   tab (`LeaderboardPage`, `GamesPage`, `BonusPage`, `HistoryPage`,
-  `SettingsPage`). Tab content is built out in later phases.
+  `SettingsPage`).
+- `src/components/settings/` — `PlayersSection`, `TeamsSection`,
+  `GamesSection` (CRUD UI) and `TurnOrderPanel` (client-side random turn
+  order, not persisted), composed in `SettingsPage`.
+- `src/utils/generateTurnOrder.js` — Fisher-Yates shuffle helper.
 
-Player/team/game management UI is added in Phase 4 per
-[docs/implementation_plan.md](../docs/implementation_plan.md).
+Scoring, leaderboard calculations, and history/undo UI are added in
+Phase 5 per [docs/implementation_plan.md](../docs/implementation_plan.md).
 
