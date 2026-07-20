@@ -35,7 +35,9 @@ function fileFilter(req, file, cb) {
   cb(null, true)
 }
 
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } })
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
+
+const upload = multer({ storage, fileFilter, limits: { fileSize: MAX_FILE_SIZE_BYTES } })
 
 const router = Router()
 

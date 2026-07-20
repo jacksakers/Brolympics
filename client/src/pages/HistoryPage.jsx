@@ -4,23 +4,17 @@ import { usePlayers } from '../hooks/usePlayers.js'
 import { useGames } from '../hooks/useGames.js'
 import { useTransactions } from '../hooks/useTransactions.js'
 import { formatDateET } from '../utils/formatDate.js'
+import { getEntrantName, getGameName } from '../utils/transactionHelpers.js'
 import { History, Download, RotateCcw, Zap, Gamepad2, Minus } from 'lucide-react'
 
 function exportCSV(transactions, players, teams, games) {
-  const getEntrant = (tx) => {
-    if (tx.player_id) return players.find((p) => p.id === tx.player_id)?.name ?? 'Unknown'
-    if (tx.team_id) return teams.find((t) => t.id === tx.team_id)?.name ?? 'Unknown'
-    return 'Unknown'
-  }
-  const getGame = (tx) => (tx.game_id ? games.find((g) => g.id === tx.game_id)?.name ?? '' : '')
-
   const rows = [
     ['Date (ET)', 'Entrant', 'Points', 'Game', 'Reason', 'Type'],
     ...transactions.map((tx) => [
       formatDateET(tx.created_at),
-      getEntrant(tx),
+      getEntrantName(tx, players, teams),
       tx.points,
-      getGame(tx),
+      getGameName(tx, games) ?? '',
       tx.reason,
       tx.reverts_transaction_id ? 'Reversal' : tx.game_id ? 'Game Score' : 'Bonus',
     ]),
@@ -60,26 +54,19 @@ export default function HistoryPage() {
   )
 
   function entrantName(tx) {
-    if (tx.player_id) return players.find((p) => p.id === tx.player_id)?.name ?? 'Unknown player'
-    if (tx.team_id) return teams.find((t) => t.id === tx.team_id)?.name ?? 'Unknown team'
-    return 'Unknown'
-  }
-
-  function gameLabel(tx) {
-    if (!tx.game_id) return null
-    return games.find((g) => g.id === tx.game_id)?.name ?? null
+    return getEntrantName(tx, players, teams)
   }
 
   function displayReason(tx) {
-    const game = gameLabel(tx)
-    const reason = typeof tx.reason === 'string' ? tx.reason : ''
+    const game = getGameName(tx, games)
+    const reason = typeof tx.reason === 'string' ? tx.reason.trim() : ''
+    if (!reason) return game ?? ''
     // Avoid duplicating the name (e.g. "Golf · Golf") when the reason
     // already matches the game name.
-    if (game && reason && reason.trim().toLowerCase() === game.trim().toLowerCase()) {
+    if (game && reason.toLowerCase() === game.trim().toLowerCase()) {
       return game
     }
-    if (game) return `${reason} · ${game}`
-    return reason
+    return game ? `${reason} · ${game}` : reason
   }
 
   return (
