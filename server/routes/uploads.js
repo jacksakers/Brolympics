@@ -2,12 +2,12 @@ import { Router } from 'express'
 import multer from 'multer'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import fs from 'node:fs'
 import crypto from 'node:crypto'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// Resolve the uploads directory path; the directory itself is created
+// once at server startup in index.js, not here.
 const uploadsDir = path.join(__dirname, '..', 'uploads')
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
 
 // Map allowed image MIME types to a safe, fixed extension. Using this
 // lookup (rather than trusting the client-supplied filename) prevents
@@ -29,7 +29,9 @@ const storage = multer.diskStorage({
 
 function fileFilter(req, file, cb) {
   if (!ALLOWED_MIME_EXTENSIONS[file.mimetype]) {
-    cb(new Error('Only JPEG, PNG, GIF, or WebP images are allowed'))
+    const err = new Error('Only JPEG, PNG, GIF, or WebP images are allowed')
+    err.code = 'UNSUPPORTED_MEDIA_TYPE'
+    cb(err)
     return
   }
   cb(null, true)
@@ -49,11 +51,11 @@ const router = Router()
 router.post('/', (req, res) => {
   upload.single('image')(req, res, (err) => {
     if (err) {
-      // Log details server-side; send only a safe generic message to the client.
       console.error('Upload error:', err)
-      const isExpectedError =
-        err.code === 'LIMIT_FILE_SIZE' || err.message.includes('Only')
-      const message = isExpectedError
+      // Surface user-facing errors (file too large, wrong type);
+      // return a generic message for anything unexpected.
+      const CLIENT_SAFE_CODES = new Set(['LIMIT_FILE_SIZE', 'UNSUPPORTED_MEDIA_TYPE'])
+      const message = CLIENT_SAFE_CODES.has(err.code)
         ? err.message
         : 'Upload failed — check server logs for details'
       return res.status(400).json({ error: message })

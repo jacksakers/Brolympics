@@ -7,6 +7,14 @@ import { formatDateET } from '../utils/formatDate.js'
 import { getEntrantName, getGameName } from '../utils/transactionHelpers.js'
 import { History, Download, RotateCcw, Zap, Gamepad2, Minus } from 'lucide-react'
 
+// Sanitize a cell value for CSV: escape double-quotes and prefix any
+// value that starts with a spreadsheet formula trigger character with a
+// tab to prevent formula injection when opened in Excel/Sheets.
+function csvCell(v) {
+  const s = String(v ?? '').replace(/"/g, '""')
+  return /^[=+\-@\t]/.test(s) ? `"\t${s}"` : `"${s}"`
+}
+
 function exportCSV(transactions, players, teams, games) {
   const rows = [
     ['Date (ET)', 'Entrant', 'Points', 'Game', 'Reason', 'Type'],
@@ -20,7 +28,7 @@ function exportCSV(transactions, players, teams, games) {
     ]),
   ]
 
-  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const csv = rows.map((r) => r.map(csvCell).join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

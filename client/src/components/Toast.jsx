@@ -10,7 +10,10 @@ const colors = {
 export default function Toast({ toasts, removeToast }) {
   if (!toasts.length) return null
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-80">
+    <div
+      className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-80"
+      aria-label="Notifications"
+    >
       {toasts.map((t) => {
         const Icon = icons[t.type] || Info
         return (
@@ -18,12 +21,13 @@ export default function Toast({ toasts, removeToast }) {
             key={t.id}
             role={t.type === 'error' ? 'alert' : 'status'}
             aria-live={t.type === 'error' ? 'assertive' : 'polite'}
+            aria-atomic="true"
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-2xl ${colors[t.type] || colors.info}`}
           >
-            <Icon size={16} />
+            <Icon size={16} aria-hidden="true" />
             <span className="flex-1">{t.message}</span>
             <button onClick={() => removeToast(t.id)} aria-label="Dismiss notification">
-              <X size={14} />
+              <X size={14} aria-hidden="true" />
             </button>
           </div>
         )
