@@ -16,11 +16,13 @@ export default function Toast({ toasts, removeToast }) {
         return (
           <div
             key={t.id}
+            role={t.type === 'error' ? 'alert' : 'status'}
+            aria-live={t.type === 'error' ? 'assertive' : 'polite'}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-2xl ${colors[t.type] || colors.info}`}
           >
             <Icon size={16} />
             <span className="flex-1">{t.message}</span>
-            <button onClick={() => removeToast(t.id)}>
+            <button onClick={() => removeToast(t.id)} aria-label="Dismiss notification">
               <X size={14} />
             </button>
           </div>

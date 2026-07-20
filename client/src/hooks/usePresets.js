@@ -21,7 +21,10 @@ export function usePresets() {
   }, [presets])
 
   const addPreset = (label, points) =>
-    setPresets((prev) => [...prev, { id: Date.now(), label, points: Number(points) }])
+    setPresets((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), label, points: Number(points) },
+    ])
 
   const removePreset = (id) => setPresets((prev) => prev.filter((p) => p.id !== id))
 

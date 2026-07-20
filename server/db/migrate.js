@@ -30,8 +30,12 @@ export function migrate(db) {
   for (const stmt of alterStatements) {
     try {
       db.prepare(stmt).run()
-    } catch {
-      // Column already exists - ignore
+    } catch (err) {
+      // SQLite reports this exact message when the column is already
+      // present; anything else is unexpected and worth surfacing.
+      if (!/duplicate column name/i.test(err.message)) {
+        console.error(`Migration statement failed: ${stmt}`, err)
+      }
     }
   }
 }

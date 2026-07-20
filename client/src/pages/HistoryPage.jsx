@@ -72,13 +72,14 @@ export default function HistoryPage() {
 
   function displayReason(tx) {
     const game = gameLabel(tx)
+    const reason = typeof tx.reason === 'string' ? tx.reason : ''
     // Avoid duplicating the name (e.g. "Golf · Golf") when the reason
     // already matches the game name.
-    if (game && tx.reason && tx.reason.trim().toLowerCase() === game.trim().toLowerCase()) {
+    if (game && reason && reason.trim().toLowerCase() === game.trim().toLowerCase()) {
       return game
     }
-    if (game) return `${tx.reason} · ${game}`
-    return tx.reason
+    if (game) return `${reason} · ${game}`
+    return reason
   }
 
   return (
