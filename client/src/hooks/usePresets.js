@@ -20,11 +20,17 @@ export function usePresets() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
   }, [presets])
 
+  // Prefer the standards-compliant randomUUID when available (requires
+  // a secure context), with a time+random fallback for plain HTTP dev.
+  function genId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID()
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  }
+
   const addPreset = (label, points) =>
-    setPresets((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), label, points: Number(points) },
-    ])
+    setPresets((prev) => [...prev, { id: genId(), label, points: Number(points) }])
 
   const removePreset = (id) => setPresets((prev) => prev.filter((p) => p.id !== id))
 

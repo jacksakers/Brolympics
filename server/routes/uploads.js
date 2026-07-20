@@ -49,7 +49,14 @@ const router = Router()
 router.post('/', (req, res) => {
   upload.single('image')(req, res, (err) => {
     if (err) {
-      return res.status(400).json({ error: err.message })
+      // Log details server-side; send only a safe generic message to the client.
+      console.error('Upload error:', err)
+      const isExpectedError =
+        err.code === 'LIMIT_FILE_SIZE' || err.message.includes('Only')
+      const message = isExpectedError
+        ? err.message
+        : 'Upload failed — check server logs for details'
+      return res.status(400).json({ error: message })
     }
     if (!req.file) return res.status(400).json({ error: 'No image uploaded' })
     res.json({ url: `/uploads/${req.file.filename}` })

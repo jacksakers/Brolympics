@@ -62,7 +62,7 @@ export default function HistoryPage() {
     const reason = typeof tx.reason === 'string' ? tx.reason.trim() : ''
     if (!reason) return game ?? ''
     // Avoid duplicating the name (e.g. "Golf · Golf") when the reason
-    // already matches the game name.
+    // already matches the game name. Trim both sides defensively.
     if (game && reason.toLowerCase() === game.trim().toLowerCase()) {
       return game
     }
