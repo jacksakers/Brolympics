@@ -9,10 +9,15 @@ import teamsRouter from './routes/teams.js'
 import playersRouter from './routes/players.js'
 import gamesRouter from './routes/games.js'
 import transactionsRouter from './routes/transactions.js'
+import uploadsRouter from './routes/uploads.js'
+import fs from 'node:fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = process.env.PORT || 3000
+
+const uploadsDir = path.join(__dirname, 'uploads')
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
 
 app.use(cors())
 app.use(express.json())
@@ -31,6 +36,8 @@ app.use('/api/teams', teamsRouter)
 app.use('/api/players', playersRouter)
 app.use('/api/games', gamesRouter)
 app.use('/api/transactions', transactionsRouter)
+app.use('/api/uploads', uploadsRouter)
+app.use('/uploads', express.static(uploadsDir))
 
 // In production, serve the built Vite client as static assets.
 if (process.env.NODE_ENV === 'production') {

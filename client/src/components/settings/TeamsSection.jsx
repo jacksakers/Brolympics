@@ -1,14 +1,8 @@
 import { useState } from 'react'
+import { Users, Pencil, Trash2, Check } from 'lucide-react'
 
-/**
- * Settings UI to add, rename, and delete Teams for an event. See
- * docs/SDD.md §4.2 (Settings tab) and docs/implementation_plan.md Phase 4.
- *
- * @param {{teamsState: ReturnType<typeof import('../../hooks/useTeams.js').useTeams>}} props
- */
 export default function TeamsSection({ teamsState }) {
-  const { teams, isLoading, error, addTeam, renameTeam, removeTeam } =
-    teamsState
+  const { teams, isLoading, error, addTeam, renameTeam, removeTeam } = teamsState
   const [newTeamName, setNewTeamName] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editingName, setEditingName] = useState('')
@@ -34,57 +28,45 @@ export default function TeamsSection({ teamsState }) {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-        Teams
+      <h2 className="flex items-center gap-2 text-base font-semibold text-[var(--text-primary)]">
+        <Users size={16} className="text-[var(--accent)]" /> Teams
       </h2>
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      )}
+      {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
 
       <ul className="space-y-2">
         {teams.map((team) => (
-          <li
-            key={team.id}
-            className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
-          >
+          <li key={team.id} className="flex items-center justify-between gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
             {editingId === team.id ? (
               <form onSubmit={handleRename} className="flex flex-1 gap-2">
                 <input
                   type="text"
                   value={editingName}
                   onChange={(e) => setEditingName(e.target.value)}
-                  className="min-w-0 flex-1 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  className="min-h-10 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-3 text-sm text-[var(--text-primary)]"
                   autoFocus
                 />
-                <button
-                  type="submit"
-                  className="min-h-11 rounded bg-purple-600 px-3 text-sm font-semibold text-white"
-                >
-                  Save
+                <button type="submit" className="flex min-h-10 items-center gap-1 rounded-xl bg-[var(--accent)] px-3 text-sm font-bold text-black">
+                  <Check size={14} />
                 </button>
               </form>
             ) : (
               <>
-                <span className="text-sm text-gray-900 dark:text-white">
-                  {team.name}
-                </span>
-                <div className="flex gap-2">
+                <span className="font-medium text-[var(--text-primary)]">{team.name}</span>
+                <div className="flex gap-1">
                   <button
                     type="button"
                     onClick={() => startEditing(team)}
-                    className="min-h-11 rounded px-3 text-sm text-purple-600 dark:text-purple-400"
+                    className="flex items-center gap-1 rounded-xl border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
                   >
-                    Rename
+                    <Pencil size={12} />
                   </button>
                   <button
                     type="button"
                     onClick={() => removeTeam(team.id)}
-                    className="min-h-11 rounded px-3 text-sm text-red-600 dark:text-red-400"
+                    className="flex items-center gap-1 rounded-xl border border-red-500/20 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
                   >
-                    Delete
+                    <Trash2 size={12} />
                   </button>
                 </div>
               </>
@@ -92,9 +74,7 @@ export default function TeamsSection({ teamsState }) {
           </li>
         ))}
         {!isLoading && teams.length === 0 && (
-          <li className="text-sm text-gray-400">
-            No teams yet — players can still play individually.
-          </li>
+          <li className="py-2 text-sm text-[var(--text-muted)]">No teams yet — players can still play individually.</li>
         )}
       </ul>
 
@@ -104,12 +84,12 @@ export default function TeamsSection({ teamsState }) {
           value={newTeamName}
           onChange={(e) => setNewTeamName(e.target.value)}
           placeholder="New team name"
-          className="min-w-0 flex-1 rounded-lg border border-gray-300 p-3 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          className="min-h-11 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
         />
         <button
           type="submit"
           disabled={!newTeamName.trim()}
-          className="min-h-11 rounded-lg bg-purple-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+          className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50"
         >
           Add
         </button>

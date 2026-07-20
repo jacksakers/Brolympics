@@ -4,3 +4,4 @@ node_modules/
 *.sqlite3-wal
 *.sqlite3-shm
 .env
+uploads/

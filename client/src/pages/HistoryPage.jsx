@@ -3,96 +3,172 @@ import { useTeams } from '../hooks/useTeams.js'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { useGames } from '../hooks/useGames.js'
 import { useTransactions } from '../hooks/useTransactions.js'
+import { formatDateET } from '../utils/formatDate.js'
+import { History, Download, RotateCcw, Zap, Gamepad2, Minus } from 'lucide-react'
 
-/**
- * History (Audit Log) tab: chronological feed of every transaction with
- * an Undo action that posts a compensating transaction, per
- * docs/SDD.md §4.2 and docs/coding_guidelines.md §4 "Immutability in
- * History". The API already returns transactions newest-first.
- */
+function exportCSV(transactions, players, teams, games) {
+  const getEntrant = (tx) => {
+    if (tx.player_id) return players.find((p) => p.id === tx.player_id)?.name ?? 'Unknown'
+    if (tx.team_id) return teams.find((t) => t.id === tx.team_id)?.name ?? 'Unknown'
+    return 'Unknown'
+  }
+  const getGame = (tx) => (tx.game_id ? games.find((g) => g.id === tx.game_id)?.name ?? '' : '')
+
+  const rows = [
+    ['Date (ET)', 'Entrant', 'Points', 'Game', 'Reason', 'Type'],
+    ...transactions.map((tx) => [
+      formatDateET(tx.created_at),
+      getEntrant(tx),
+      tx.points,
+      getGame(tx),
+      tx.reason,
+      tx.reverts_transaction_id ? 'Reversal' : tx.game_id ? 'Game Score' : 'Bonus',
+    ]),
+  ]
+
+  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'brolympics-history.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function txType(tx) {
+  if (tx.reverts_transaction_id) return 'reversal'
+  if (tx.game_id) return 'game'
+  return 'bonus'
+}
+
+const TYPE_BADGE = {
+  game: { label: 'Game', Icon: Gamepad2, cls: 'bg-[var(--accent-dim)] text-[var(--accent)] border-[var(--accent)]/30' },
+  bonus: { label: 'Bonus', Icon: Zap, cls: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30' },
+  reversal: { label: 'Undo', Icon: RotateCcw, cls: 'bg-red-400/10 text-red-400 border-red-400/30' },
+}
+
 export default function HistoryPage() {
   const { event } = useEvent()
   const { teams } = useTeams(event.id)
   const { players } = usePlayers(event.id)
   const { games } = useGames(event.id)
-  const { transactions, isLoading, error, undoTransaction } = useTransactions(
-    event.id,
-  )
+  const { transactions, isLoading, error, undoTransaction } = useTransactions(event.id)
 
   const revertedIds = new Set(
-    transactions
-      .map((t) => t.reverts_transaction_id)
-      .filter((id) => id != null),
+    transactions.map((t) => t.reverts_transaction_id).filter((id) => id != null),
   )
 
   function entrantName(tx) {
-    if (tx.player_id) {
-      return players.find((p) => p.id === tx.player_id)?.name ?? 'Unknown player'
-    }
-    if (tx.team_id) {
-      return teams.find((t) => t.id === tx.team_id)?.name ?? 'Unknown team'
-    }
+    if (tx.player_id) return players.find((p) => p.id === tx.player_id)?.name ?? 'Unknown player'
+    if (tx.team_id) return teams.find((t) => t.id === tx.team_id)?.name ?? 'Unknown team'
     return 'Unknown'
   }
 
-  function gameName(tx) {
+  function gameLabel(tx) {
     if (!tx.game_id) return null
     return games.find((g) => g.id === tx.game_id)?.name ?? null
   }
 
-  return (
-    <section className="space-y-3">
-      <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-        History
-      </h2>
+  function displayReason(tx) {
+    const game = gameLabel(tx)
+    // Avoid duplicating the name (e.g. "Golf · Golf") when the reason
+    // already matches the game name.
+    if (game && tx.reason && tx.reason.trim().toLowerCase() === game.trim().toLowerCase()) {
+      return game
+    }
+    if (game) return `${tx.reason} · ${game}`
+    return tx.reason
+  }
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      )}
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <History size={20} className="text-[var(--accent)]" />
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">History</h2>
+        </div>
+        {transactions.length > 0 && (
+          <button
+            type="button"
+            onClick={() => exportCSV(transactions, players, teams, games)}
+            className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            <Download size={14} /> Export CSV
+          </button>
+        )}
+      </div>
+
+      {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
 
       {!isLoading && transactions.length === 0 && (
-        <p className="text-sm text-gray-400">No transactions yet.</p>
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] py-12">
+          <History size={32} className="text-[var(--text-muted)]" />
+          <p className="text-sm text-[var(--text-muted)]">No transactions yet.</p>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-[var(--bg-card)]" />
+          ))}
+        </div>
       )}
 
       <ul className="space-y-2">
         {transactions.map((tx) => {
           const canUndo = !tx.reverts_transaction_id && !revertedIds.has(tx.id)
-          const game = gameName(tx)
+          const type = txType(tx)
+          const badge = TYPE_BADGE[type]
+          const isReverted = revertedIds.has(tx.id)
 
           return (
             <li
               key={tx.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+              className={`rounded-2xl border p-4 transition-colors ${
+                isReverted ? 'border-[var(--border)] bg-[var(--bg-card)] opacity-50' : 'border-[var(--border)] bg-[var(--bg-card)]'
+              }`}
             >
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {entrantName(tx)}{' '}
-                  <span
-                    className={
-                      tx.points >= 0
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                    }
-                  >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-semibold ${badge.cls}`}>
+                      <badge.Icon size={11} />
+                      {badge.label}
+                    </span>
+                    {isReverted && (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] px-1.5 py-0.5 text-xs text-[var(--text-muted)]">
+                        <Minus size={11} /> Undone
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-[var(--text-primary)] leading-snug">{entrantName(tx)}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-snug">{displayReason(tx)}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">{formatDateET(tx.created_at)}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <span className={`text-lg font-black ${tx.points >= 0 ? 'text-[var(--success)]' : 'text-red-400'}`}>
                     {tx.points >= 0 ? `+${tx.points}` : tx.points}
                   </span>
-                </p>
-                <p className="text-xs text-gray-400">
-                  {tx.reason}
-                  {game ? ` · ${game}` : ''} ·{' '}
-                  {new Date(tx.created_at).toLocaleString()}
-                </p>
+                  {canUndo && (
+                    <button
+                      type="button"
+                      onClick={() => undoTransaction(tx.id)}
+                      className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-muted)] hover:border-red-400/50 hover:text-red-400 transition-colors"
+                    >
+                      <RotateCcw size={11} /> Undo
+                    </button>
+                  )}
+                </div>
               </div>
-              {canUndo && (
-                <button
-                  type="button"
-                  onClick={() => undoTransaction(tx.id)}
-                  className="min-h-11 rounded px-3 text-sm text-purple-600 dark:text-purple-400"
-                >
-                  Undo
-                </button>
+              {tx.image_url && (
+                <img
+                  src={tx.image_url}
+                  alt="Bonus"
+                  className="mt-3 w-full max-h-48 rounded-xl object-cover"
+                  onError={(e) => (e.target.style.display = 'none')}
+                />
               )}
             </li>
           )

@@ -137,3 +137,14 @@ export function createTransaction(data) {
 export function revertTransaction(id) {
   return request(`/transactions/${id}/revert`, { method: 'POST' })
 }
+
+// --- Uploads ----------------------------------------------------------------
+
+/** @param {File} file */
+export async function uploadImage(file) {
+  const formData = new FormData()
+  formData.append('image', file)
+  const res = await fetch(`${API_BASE}/uploads`, { method: 'POST', body: formData })
+  if (!res.ok) throw new Error('Upload failed')
+  return res.json()
+}
