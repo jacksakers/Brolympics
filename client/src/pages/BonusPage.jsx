@@ -76,7 +76,7 @@ export default function BonusPage() {
                 key={preset.id}
                 type="button"
                 onClick={() => applyPreset(preset)}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                className="max-w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-left text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >
                 {preset.label}
                 <span className={`ml-1.5 font-black ${preset.points >= 0 ? 'text-[var(--success)]' : 'text-red-400'}`}>
@@ -124,21 +124,21 @@ export default function BonusPage() {
           ))}
         </select>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <input
             type="number"
             inputMode="numeric"
             value={pointsValue}
             onChange={(e) => setPointsValue(e.target.value)}
             placeholder="Points (e.g. 10 or -5)"
-            className="min-h-12 w-28 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+            className="min-h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-28"
           />
           <input
             type="text"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Reason (e.g. Drank a beer)"
-            className="min-h-12 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+            className="min-h-12 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
           />
         </div>
 

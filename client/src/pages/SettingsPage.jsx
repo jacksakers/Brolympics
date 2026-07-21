@@ -30,9 +30,9 @@ function PresetsSection() {
       <p className="text-xs text-[var(--text-muted)]">Quick-fill buttons for common bonus point values.</p>
       <ul className="space-y-2">
         {presets.map((p) => (
-          <li key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
-            <span className="text-sm text-[var(--text-primary)]">{p.label}</span>
-            <div className="flex items-center gap-3">
+          <li key={p.id} className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="min-w-0 break-words text-sm text-[var(--text-primary)]">{p.label}</span>
+            <div className="flex items-center justify-between gap-3 sm:justify-normal">
               <span className={`text-sm font-bold ${p.points >= 0 ? 'text-[var(--success)]' : 'text-red-400'}`}>
                 {p.points >= 0 ? `+${p.points}` : p.points}
               </span>
@@ -44,25 +44,25 @@ function PresetsSection() {
         ))}
         {presets.length === 0 && <li className="text-sm text-[var(--text-muted)]">No presets yet.</li>}
       </ul>
-      <form onSubmit={handleAdd} className="flex gap-2">
+      <form onSubmit={handleAdd} className="flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder="Label (e.g. Wii Golf Win)"
-          className="min-h-11 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+          className="min-h-11 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
         />
         <input
           type="number"
           value={points}
           onChange={(e) => setPoints(e.target.value)}
           placeholder="Pts"
-          className="min-h-11 w-20 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+          className="min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-20"
         />
         <button
           type="submit"
           disabled={!label.trim() || !points}
-          className="flex min-h-11 items-center gap-1.5 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50"
+          className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50"
         >
           <Plus size={14} /> Add
         </button>
