@@ -37,10 +37,17 @@ router.get('/:id', (req, res) => {
 
 /**
  * POST /api/games
- * Body: { event_id: number, name: string, format: 'team'|'individual', points_config?: object }
+ * Body: { event_id: number, name: string, format: 'team'|'individual', points_config?: object, rules?: string, image_url?: string }
  */
 router.post('/', (req, res) => {
-  const { event_id: eventId, name, format, points_config: pointsConfig = null } = req.body
+  const {
+    event_id: eventId,
+    name,
+    format,
+    points_config: pointsConfig = null,
+    rules = null,
+    image_url: imageUrl = null,
+  } = req.body
 
   if (!eventId || typeof name !== 'string' || name.trim() === '') {
     return res.status(400).json({ error: 'event_id and name are required' })
@@ -52,9 +59,16 @@ router.post('/', (req, res) => {
 
   const { lastInsertRowid } = db
     .prepare(
-      'INSERT INTO games (event_id, name, format, points_config) VALUES (?, ?, ?, ?)',
+      'INSERT INTO games (event_id, name, format, points_config, rules, image_url) VALUES (?, ?, ?, ?, ?, ?)',
     )
-    .run(eventId, name.trim(), format, pointsConfig ? JSON.stringify(pointsConfig) : null)
+    .run(
+      eventId,
+      name.trim(),
+      format,
+      pointsConfig ? JSON.stringify(pointsConfig) : null,
+      rules,
+      imageUrl,
+    )
 
   const game = db.prepare('SELECT * FROM games WHERE id = ?').get(lastInsertRowid)
   res.status(201).json(game)
@@ -62,7 +76,7 @@ router.post('/', (req, res) => {
 
 /**
  * PUT /api/games/:id
- * Body: { name?: string, format?: 'team'|'individual', points_config?: object }
+ * Body: { name?: string, format?: 'team'|'individual', points_config?: object, rules?: string, image_url?: string }
  */
 router.put('/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM games WHERE id = ?').get(req.params.id)
@@ -79,13 +93,12 @@ router.put('/:id', (req, res) => {
         ? JSON.stringify(req.body.points_config)
         : null
       : existing.points_config
+  const rules = 'rules' in req.body ? req.body.rules : existing.rules
+  const imageUrl = 'image_url' in req.body ? req.body.image_url : existing.image_url
 
-  db.prepare('UPDATE games SET name = ?, format = ?, points_config = ? WHERE id = ?').run(
-    name,
-    format,
-    pointsConfig,
-    req.params.id,
-  )
+  db.prepare(
+    'UPDATE games SET name = ?, format = ?, points_config = ?, rules = ?, image_url = ? WHERE id = ?',
+  ).run(name, format, pointsConfig, rules, imageUrl, req.params.id)
 
   const game = db.prepare('SELECT * FROM games WHERE id = ?').get(req.params.id)
   res.json(game)

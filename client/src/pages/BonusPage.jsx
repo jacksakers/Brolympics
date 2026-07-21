@@ -3,17 +3,15 @@ import { useEvent } from '../context/EventContext.jsx'
 import { useTeams } from '../hooks/useTeams.js'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { useTransactions } from '../hooks/useTransactions.js'
+import { usePresets } from '../hooks/usePresets.js'
+import { Zap, Bookmark, Users, User } from 'lucide-react'
 
-/**
- * Bonus Points tab: quick-action form to award (or dock) arbitrary points
- * to a player or team with a reason, e.g. "Drank a beer - +10 pts". See
- * docs/SDD.md §4.2 and docs/implementation_plan.md Phase 5.
- */
 export default function BonusPage() {
   const { event } = useEvent()
   const { teams } = useTeams(event.id)
   const { players } = usePlayers(event.id)
   const { addTransaction, error } = useTransactions(event.id)
+  const { presets } = usePresets()
 
   const hasTeams = teams.length > 0
   const [entrantType, setEntrantType] = useState('player')
@@ -21,15 +19,19 @@ export default function BonusPage() {
   const [pointsValue, setPointsValue] = useState('')
   const [reason, setReason] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const entrants = entrantType === 'team' ? teams : players
+
+  function applyPreset(preset) {
+    setPointsValue(String(preset.points))
+    setReason(preset.label)
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     const points = Number(pointsValue)
-    if (!entrantId || !Number.isFinite(points) || points === 0 || !reason.trim()) {
-      return
-    }
+    if (!entrantId || !Number.isFinite(points) || points === 0 || !reason.trim()) return
 
     setIsSubmitting(true)
     try {
@@ -41,41 +43,69 @@ export default function BonusPage() {
       setEntrantId('')
       setPointsValue('')
       setReason('')
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 2000)
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-        Bonus Points
-      </h2>
+    <section className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Zap size={20} className="text-[var(--accent)]" />
+        <h2 className="text-lg font-bold text-[var(--text-primary)]">Bonus Points</h2>
+      </div>
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
+      {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+
+      {success && (
+        <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm font-semibold text-green-400">
+          Points awarded!
+        </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-2">
-        {hasTeams && (
-          <div className="flex gap-2">
-            {['player', 'team'].map((type) => (
+      {presets.length > 0 && (
+        <div>
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+            <Bookmark size={12} /> Quick Presets
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {presets.map((preset) => (
               <button
-                key={type}
+                key={preset.id}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className="max-w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-left text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              >
+                {preset.label}
+                <span className={`ml-1.5 font-black ${preset.points >= 0 ? 'text-[var(--success)]' : 'text-red-400'}`}>
+                  {preset.points >= 0 ? `+${preset.points}` : preset.points}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        {hasTeams && (
+          <div className="flex gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-1">
+            {[['player', User, 'Player'], ['team', Users, 'Team']].map(([val, Icon, label]) => (
+              <button
+                key={val}
                 type="button"
                 onClick={() => {
-                  setEntrantType(type)
+                  setEntrantType(val)
                   setEntrantId('')
                 }}
-                className={`min-h-11 flex-1 rounded-lg border px-3 text-sm font-semibold capitalize ${
-                  entrantType === type
-                    ? 'border-purple-600 bg-purple-600 text-white'
-                    : 'border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-300'
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+                  entrantType === val
+                    ? 'bg-[var(--accent)] text-black'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                {type}
+                <Icon size={16} /> {label}
               </button>
             ))}
           </div>
@@ -84,41 +114,40 @@ export default function BonusPage() {
         <select
           value={entrantId}
           onChange={(e) => setEntrantId(e.target.value)}
-          className="min-h-11 w-full rounded-lg border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          className="min-h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)]"
         >
-          <option value="">
-            Select {entrantType === 'team' ? 'a team' : 'a player'}…
-          </option>
-          {entrants.map((entrant) => (
-            <option key={entrant.id} value={entrant.id}>
-              {entrant.name}
+          <option value="">Select {entrantType === 'team' ? 'a team' : 'a player'}…</option>
+          {entrants.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.name}
             </option>
           ))}
         </select>
 
-        <input
-          type="number"
-          inputMode="numeric"
-          value={pointsValue}
-          onChange={(e) => setPointsValue(e.target.value)}
-          placeholder="Points (e.g. 10 or -5)"
-          className="w-full rounded-lg border border-gray-300 p-3 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        />
-
-        <input
-          type="text"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason (e.g. Drank a beer)"
-          className="w-full rounded-lg border border-gray-300 p-3 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        />
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            type="number"
+            inputMode="numeric"
+            value={pointsValue}
+            onChange={(e) => setPointsValue(e.target.value)}
+            placeholder="Points (e.g. 10 or -5)"
+            className="min-h-12 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-28"
+          />
+          <input
+            type="text"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Reason (e.g. Drank a beer)"
+            className="min-h-12 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+          />
+        </div>
 
         <button
           type="submit"
           disabled={isSubmitting || !entrantId || !pointsValue || !reason.trim()}
-          className="min-h-11 w-full rounded-lg bg-purple-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50 hover:bg-[var(--accent-hover)] transition-colors"
         >
-          Award Points
+          <Zap size={16} /> Award Points
         </button>
       </form>
     </section>

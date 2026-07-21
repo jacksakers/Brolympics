@@ -1,22 +1,8 @@
 import { useState } from 'react'
+import { Users, Pencil, Trash2, Check } from 'lucide-react'
 
-/**
- * Settings UI to add, rename, delete Players, and assign them to a Team
- * (or leave unassigned for individual play). See docs/SDD.md §4.2 and
- * docs/implementation_plan.md Phase 4.
- *
- * @param {{playersState: ReturnType<typeof import('../../hooks/usePlayers.js').usePlayers>, teams: Array}} props
- */
 export default function PlayersSection({ playersState, teams }) {
-  const {
-    players,
-    isLoading,
-    error,
-    addPlayer,
-    renamePlayer,
-    assignPlayerTeam,
-    removePlayer,
-  } = playersState
+  const { players, isLoading, error, addPlayer, renamePlayer, assignPlayerTeam, removePlayer } = playersState
   const [newPlayerName, setNewPlayerName] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editingName, setEditingName] = useState('')
@@ -46,22 +32,15 @@ export default function PlayersSection({ playersState, teams }) {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-        Players
+      <h2 className="flex items-center gap-2 text-base font-semibold text-[var(--text-primary)]">
+        <Users size={16} className="text-[var(--accent)]" /> Players
       </h2>
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      )}
+      {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
 
       <ul className="space-y-2">
         {players.map((player) => (
-          <li
-            key={player.id}
-            className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
-          >
+          <li key={player.id} className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
             <div className="flex items-center justify-between gap-2">
               {editingId === player.id ? (
                 <form onSubmit={handleRename} className="flex flex-1 gap-2">
@@ -69,58 +48,60 @@ export default function PlayersSection({ playersState, teams }) {
                     type="text"
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
-                    className="min-w-0 flex-1 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    className="min-h-10 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-3 text-sm text-[var(--text-primary)]"
                     autoFocus
                   />
-                  <button
-                    type="submit"
-                    className="min-h-11 rounded bg-purple-600 px-3 text-sm font-semibold text-white"
-                  >
-                    Save
+                  <button type="submit" className="flex min-h-10 items-center gap-1 rounded-xl bg-[var(--accent)] px-3 text-sm font-bold text-black">
+                    <Check size={14} />
                   </button>
                 </form>
               ) : (
                 <>
-                  <span className="text-sm text-gray-900 dark:text-white">
-                    {player.name}
-                  </span>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    {player.image_url && (
+                      <img
+                        src={player.image_url}
+                        alt={player.name}
+                        className="h-8 w-8 rounded-full object-cover"
+                        onError={(e) => (e.target.style.display = 'none')}
+                      />
+                    )}
+                    <span className="font-medium text-[var(--text-primary)]">{player.name}</span>
+                  </div>
+                  <div className="flex gap-1">
                     <button
                       type="button"
                       onClick={() => startEditing(player)}
-                      className="min-h-11 rounded px-3 text-sm text-purple-600 dark:text-purple-400"
+                      className="flex items-center gap-1 rounded-xl border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
                     >
-                      Rename
+                      <Pencil size={12} />
                     </button>
                     <button
                       type="button"
                       onClick={() => removePlayer(player.id)}
-                      className="min-h-11 rounded px-3 text-sm text-red-600 dark:text-red-400"
+                      className="flex items-center gap-1 rounded-xl border border-red-500/20 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
                     >
-                      Delete
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </>
               )}
             </div>
-
             <select
               value={player.team_id ?? ''}
               onChange={(e) => handleTeamChange(player.id, e.target.value)}
-              className="min-h-11 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              className="min-h-10 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-3 text-sm text-[var(--text-primary)]"
             >
               <option value="">Individual (no team)</option>
-              {teams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
+              {teams.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
                 </option>
               ))}
             </select>
           </li>
         ))}
-        {!isLoading && players.length === 0 && (
-          <li className="text-sm text-gray-400">No players yet.</li>
-        )}
+        {!isLoading && players.length === 0 && <li className="py-4 text-sm text-[var(--text-muted)]">No players yet.</li>}
       </ul>
 
       <form onSubmit={handleAdd} className="flex gap-2">
@@ -129,12 +110,12 @@ export default function PlayersSection({ playersState, teams }) {
           value={newPlayerName}
           onChange={(e) => setNewPlayerName(e.target.value)}
           placeholder="New player name"
-          className="min-w-0 flex-1 rounded-lg border border-gray-300 p-3 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          className="min-h-11 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
         />
         <button
           type="submit"
           disabled={!newPlayerName.trim()}
-          className="min-h-11 rounded-lg bg-purple-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+          className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50"
         >
           Add
         </button>

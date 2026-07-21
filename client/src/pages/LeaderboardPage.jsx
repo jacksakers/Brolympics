@@ -3,25 +3,20 @@ import { useEvent } from '../context/EventContext.jsx'
 import { useTeams } from '../hooks/useTeams.js'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { useTransactions } from '../hooks/useTransactions.js'
-import {
-  calculatePlayerTotals,
-  calculateTeamTotals,
-} from '../utils/calculateScores.js'
+import { calculatePlayerTotals, calculateTeamTotals } from '../utils/calculateScores.js'
+import { Trophy, Users, User, TrendingUp } from 'lucide-react'
 
-const MEDALS = ['🥇', '🥈', '🥉']
+const RANK_STYLES = [
+  { bg: 'bg-yellow-400/15 border-yellow-400/30', text: 'text-yellow-400', label: '1st' },
+  { bg: 'bg-gray-400/10 border-gray-400/20', text: 'text-gray-300', label: '2nd' },
+  { bg: 'bg-orange-400/10 border-orange-400/20', text: 'text-orange-400', label: '3rd' },
+]
 
-/**
- * Leaderboard tab: dynamically ranks teams and/or players from the
- * transactions table. See docs/SDD.md §4.2 and
- * docs/implementation_plan.md Phase 5.
- */
 export default function LeaderboardPage() {
   const { event } = useEvent()
   const { teams, isLoading: teamsLoading } = useTeams(event.id)
   const { players, isLoading: playersLoading } = usePlayers(event.id)
-  const { transactions, isLoading: txLoading, error } = useTransactions(
-    event.id,
-  )
+  const { transactions, isLoading: txLoading, error } = useTransactions(event.id)
   const [view, setView] = useState('teams')
 
   const isLoading = teamsLoading || playersLoading || txLoading
@@ -34,65 +29,74 @@ export default function LeaderboardPage() {
       : calculatePlayerTotals(transactions, players)
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-        Leaderboard
-      </h2>
+    <section className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Trophy size={20} className="text-[var(--accent)]" />
+        <h2 className="text-lg font-bold text-[var(--text-primary)]">Leaderboard</h2>
+      </div>
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      )}
+      {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
 
       {hasTeams && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setView('teams')}
-            className={`min-h-11 flex-1 rounded-lg border px-3 text-sm font-semibold ${
-              activeView === 'teams'
-                ? 'border-purple-600 bg-purple-600 text-white'
-                : 'border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-300'
-            }`}
-          >
-            Teams
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('players')}
-            className={`min-h-11 flex-1 rounded-lg border px-3 text-sm font-semibold ${
-              activeView === 'players'
-                ? 'border-purple-600 bg-purple-600 text-white'
-                : 'border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-300'
-            }`}
-          >
-            Individuals
-          </button>
+        <div className="flex gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-1">
+          {[['teams', Users, 'Teams'], ['players', User, 'Players']].map(([val, Icon, label]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setView(val)}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+                activeView === val
+                  ? 'bg-[var(--accent)] text-black shadow-lg'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Icon size={16} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-xl bg-[var(--bg-card)]" />
+          ))}
         </div>
       )}
 
       {!isLoading && rankings.length === 0 && (
-        <p className="text-sm text-gray-400">No scores yet.</p>
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] py-12">
+          <TrendingUp size={32} className="text-[var(--text-muted)]" />
+          <p className="text-sm text-[var(--text-muted)]">No scores yet — play some games!</p>
+        </div>
       )}
 
       <ol className="space-y-2">
-        {rankings.map((entrant, index) => (
-          <li
-            key={entrant.id}
-            className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700"
-          >
-            <span className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-              <span className="w-6 text-center">
-                {MEDALS[index] ?? index + 1}
-              </span>
-              {entrant.name}
-            </span>
-            <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-              {entrant.total} pts
-            </span>
-          </li>
-        ))}
+        {rankings.map((entrant, index) => {
+          const style = RANK_STYLES[index]
+          return (
+            <li
+              key={entrant.id}
+              className={`flex items-center gap-3 rounded-xl border p-4 transition-colors ${
+                style ? style.bg : 'border-[var(--border)] bg-[var(--bg-card)]'
+              }`}
+            >
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ${
+                  style ? `${style.text} ring-1 ring-current` : 'text-[var(--text-secondary)]'
+                }`}
+              >
+                {style ? style.label : index + 1}
+              </div>
+              <span className="flex-1 font-semibold text-[var(--text-primary)]">{entrant.name}</span>
+              <div className="flex items-baseline gap-1">
+                <span className={`text-xl font-black ${style ? style.text : 'text-[var(--accent)]'}`}>{entrant.total}</span>
+                <span className="text-xs text-[var(--text-muted)]">pts</span>
+              </div>
+            </li>
+          )
+        })}
       </ol>
     </section>
   )

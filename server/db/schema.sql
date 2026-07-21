@@ -21,18 +21,23 @@ CREATE TABLE IF NOT EXISTS players (
   event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
   team_id INTEGER REFERENCES teams (id) ON DELETE SET NULL,
   name TEXT NOT NULL,
+  image_url TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- format: 'team' scores are awarded to a team_id, 'individual' scores are
 -- awarded to a player_id. points_config is a free-form JSON string (e.g.
--- placement -> points) interpreted by the client.
+-- placement -> points) interpreted by the client. rules is a free-form
+-- text description of how the game is played; image_url is an optional
+-- illustrative photo/diagram.
 CREATE TABLE IF NOT EXISTS games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   format TEXT NOT NULL CHECK (format IN ('team', 'individual')),
   points_config TEXT,
+  rules TEXT,
+  image_url TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -47,6 +52,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   game_id INTEGER REFERENCES games (id) ON DELETE SET NULL,
   points INTEGER NOT NULL,
   reason TEXT NOT NULL,
+  image_url TEXT,
   reverts_transaction_id INTEGER REFERENCES transactions (id),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   CHECK (player_id IS NOT NULL OR team_id IS NOT NULL)

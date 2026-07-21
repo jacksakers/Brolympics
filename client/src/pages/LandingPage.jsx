@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useEvent } from '../context/EventContext.jsx'
+import { Trophy, Users, ArrowRight } from 'lucide-react'
 
-/**
- * Landing page: create a new event or join an existing one by code.
- * See docs/SDD.md §4.1.
- */
 export default function LandingPage() {
   const { create, join, error } = useEvent()
   const navigate = useNavigate()
@@ -21,7 +18,7 @@ export default function LandingPage() {
       await create(eventName.trim())
       navigate('/event')
     } catch {
-      // error is surfaced via context
+      // error is surfaced via context's error state
     } finally {
       setIsSubmitting(false)
     }
@@ -35,64 +32,85 @@ export default function LandingPage() {
       await join(joinCode.trim().toUpperCase())
       navigate('/event')
     } catch {
-      // error is surfaced via context
+      // error is surfaced via context's error state
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-white p-4 dark:bg-gray-900">
-      <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-        🏆 Brolympics
-      </h1>
-
-      <form onSubmit={handleCreate} className="w-full max-w-sm space-y-3">
-        <input
-          type="text"
-          value={eventName}
-          onChange={(e) => setEventName(e.target.value)}
-          placeholder="Event name (e.g. Lake Trip 2026)"
-          className="w-full rounded-lg border border-gray-300 p-3 text-base dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting || !eventName.trim()}
-          className="min-h-11 w-full rounded-lg bg-purple-600 p-3 text-base font-semibold text-white disabled:opacity-50"
-        >
-          Create New Event
-        </button>
-      </form>
-
-      <div className="flex w-full max-w-sm items-center gap-3 text-gray-400">
-        <div className="h-px flex-1 bg-gray-300 dark:bg-gray-700" />
-        or
-        <div className="h-px flex-1 bg-gray-300 dark:bg-gray-700" />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--bg-base)] p-4">
+      {/* Hero */}
+      <div className="mb-10 flex flex-col items-center gap-4 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--accent-dim)] ring-1 ring-[var(--accent)]/30">
+          <Trophy size={40} className="text-[var(--accent)]" />
+        </div>
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-[var(--text-primary)]">BROLYMPICS</h1>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">The ultimate friend-group scoreboard</p>
+        </div>
       </div>
 
-      <form onSubmit={handleJoin} className="w-full max-w-sm space-y-3">
-        <input
-          type="text"
-          value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value)}
-          placeholder="Enter event code"
-          maxLength={6}
-          className="w-full rounded-lg border border-gray-300 p-3 text-center text-base uppercase tracking-widest dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting || !joinCode.trim()}
-          className="min-h-11 w-full rounded-lg border border-purple-600 p-3 text-base font-semibold text-purple-600 disabled:opacity-50 dark:text-purple-400"
-        >
-          Join Existing Event
-        </button>
-      </form>
+      <div className="w-full max-w-sm space-y-4">
+        {/* Create */}
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+            <Trophy size={16} className="text-[var(--accent)]" />
+            Start New Event
+          </h2>
+          <form onSubmit={handleCreate} className="space-y-3">
+            <input
+              type="text"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              placeholder="Event name (e.g. Lake Trip 2026)"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+            />
+            <button
+              type="submit"
+              disabled={isSubmitting || !eventName.trim()}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black transition-opacity disabled:opacity-50 hover:bg-[var(--accent-hover)]"
+            >
+              Create Event <ArrowRight size={16} />
+            </button>
+          </form>
+        </div>
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      )}
+        <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
+          <div className="h-px flex-1 bg-[var(--border)]" />
+          OR JOIN EXISTING
+          <div className="h-px flex-1 bg-[var(--border)]" />
+        </div>
+
+        {/* Join */}
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+            <Users size={16} className="text-[var(--accent)]" />
+            Join Event
+          </h2>
+          <form onSubmit={handleJoin} className="space-y-3">
+            <input
+              type="text"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value)}
+              placeholder="Enter event code"
+              maxLength={6}
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-center text-sm uppercase tracking-[0.3em] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] placeholder:normal-case placeholder:tracking-normal"
+            />
+            <button
+              type="submit"
+              disabled={isSubmitting || !joinCode.trim()}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[var(--accent)] px-4 text-sm font-bold text-[var(--accent)] transition-colors disabled:opacity-50 hover:bg-[var(--accent-dim)]"
+            >
+              Join Event <ArrowRight size={16} />
+            </button>
+          </form>
+        </div>
+
+        {error && (
+          <p role="alert" className="text-center text-sm text-red-400">{error}</p>
+        )}
+      </div>
     </div>
   )
 }
