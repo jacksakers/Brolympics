@@ -57,7 +57,7 @@ function PresetsSection() {
           value={points}
           onChange={(e) => setPoints(e.target.value)}
           placeholder="Pts"
-          className="min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-20"
+          className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-20"
         />
         <button
           type="submit"

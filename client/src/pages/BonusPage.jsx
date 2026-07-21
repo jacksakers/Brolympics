@@ -131,7 +131,7 @@ export default function BonusPage() {
             value={pointsValue}
             onChange={(e) => setPointsValue(e.target.value)}
             placeholder="Points (e.g. 10 or -5)"
-            className="min-h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-28"
+            className="min-h-12 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-28"
           />
           <input
             type="text"
