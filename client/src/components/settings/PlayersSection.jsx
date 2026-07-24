@@ -1,35 +1,33 @@
 import { useRef, useState } from 'react'
 import { Users, Pencil, Trash2, Check, Camera, Loader2 } from 'lucide-react'
-import { compressImage } from '../../utils/compressImage.js'
-import { uploadImage } from '../../lib/api.js'
+import { usePhotoUpload } from '../../hooks/usePhotoUpload.js'
+import { useDraftState } from '../../hooks/useDraftState.js'
 
 export default function PlayersSection({ playersState, teams }) {
   const { players, isLoading, error, addPlayer, renamePlayer, assignPlayerTeam, removePlayer, editPlayer } = playersState
   const [newPlayerName, setNewPlayerName] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editingName, setEditingName] = useState('')
-  const [uploadingId, setUploadingId] = useState(null)
+  const { isUploading, upload } = usePhotoUpload()
+  // Persisted (not just a ref) so which player we're uploading for
+  // survives a mobile OS reloading the tab while the native photo
+  // picker is open (see docs/coding_guidelines.md "mobile photo upload").
+  const [avatarTargetId, setAvatarTargetId] = useDraftState('brolympics_avatar_upload_target', null)
   const fileInputRef = useRef(null)
-  const avatarTargetId = useRef(null)
 
   async function handleAvatarFile(e) {
     const file = e.target.files?.[0]
-    const playerId = avatarTargetId.current
+    const playerId = avatarTargetId
     e.target.value = ''
     if (!file || !playerId) return
 
-    setUploadingId(playerId)
-    try {
-      const compressed = await compressImage(file)
-      const { url } = await uploadImage(compressed)
-      await editPlayer(playerId, { image_url: url })
-    } finally {
-      setUploadingId(null)
-    }
+    const url = await upload(file)
+    if (url) await editPlayer(playerId, { image_url: url })
+    setAvatarTargetId(null)
   }
 
   function triggerAvatarUpload(playerId) {
-    avatarTargetId.current = playerId
+    setAvatarTargetId(playerId)
     fileInputRef.current?.click()
   }
 
@@ -100,7 +98,7 @@ export default function PlayersSection({ playersState, teams }) {
                       ) : (
                         <Camera size={13} className="text-[var(--text-muted)]" />
                       )}
-                      {uploadingId === player.id && (
+                      {isUploading && avatarTargetId === player.id && (
                         <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
                           <Loader2 size={13} className="animate-spin text-white" />
                         </span>
@@ -165,7 +163,6 @@ export default function PlayersSection({ playersState, teams }) {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         onChange={handleAvatarFile}
         className="hidden"
       />

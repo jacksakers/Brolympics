@@ -1,6 +1,5 @@
-import { useRef, useState } from 'react'
-import { compressImage } from '../utils/compressImage.js'
-import { uploadImage } from '../lib/api.js'
+import { useRef } from 'react'
+import { usePhotoUpload } from '../hooks/usePhotoUpload.js'
 import { Camera, X, Loader2 } from 'lucide-react'
 
 /**
@@ -13,25 +12,15 @@ import { Camera, X, Loader2 } from 'lucide-react'
  */
 export default function PhotoAttach({ imageUrl, onChange }) {
   const inputRef = useRef(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [error, setError] = useState(null)
+  const { isUploading, error, upload } = usePhotoUpload()
 
   async function handleFile(e) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
 
-    setIsUploading(true)
-    setError(null)
-    try {
-      const compressed = await compressImage(file)
-      const { url } = await uploadImage(compressed)
-      onChange(url)
-    } catch (err) {
-      setError(err.message || 'Photo upload failed')
-    } finally {
-      setIsUploading(false)
-    }
+    const url = await upload(file)
+    if (url) onChange(url)
   }
 
   if (imageUrl) {
@@ -66,7 +55,6 @@ export default function PhotoAttach({ imageUrl, onChange }) {
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         onChange={handleFile}
         className="hidden"
       />

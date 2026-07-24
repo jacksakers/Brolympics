@@ -1,15 +1,19 @@
 import { useState } from 'react'
+import { useDraftState } from '../../hooks/useDraftState.js'
 import PhotoAttach from '../PhotoAttach.jsx'
 import { CheckCircle } from 'lucide-react'
 
 export default function GameScoreForm({ game, entrants, onSubmitScores }) {
-  const [points, setPoints] = useState({})
-  const [imageUrl, setImageUrl] = useState(null)
+  const [draft, setDraft, clearDraft] = useDraftState(`brolympics_game_score_draft_${game.id}`, {
+    points: {},
+    imageUrl: null,
+  })
+  const { points, imageUrl } = draft
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
 
   function handlePointsChange(entrantId, value) {
-    setPoints((prev) => ({ ...prev, [entrantId]: value }))
+    setDraft((prev) => ({ ...prev, points: { ...prev.points, [entrantId]: value } }))
   }
 
   async function handleSubmit(e) {
@@ -21,8 +25,7 @@ export default function GameScoreForm({ game, entrants, onSubmitScores }) {
     setIsSubmitting(true)
     try {
       await onSubmitScores(scores, imageUrl)
-      setPoints({})
-      setImageUrl(null)
+      clearDraft()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } finally {
@@ -62,7 +65,7 @@ export default function GameScoreForm({ game, entrants, onSubmitScores }) {
 
       {entrants.length > 0 && (
         <>
-          <PhotoAttach imageUrl={imageUrl} onChange={setImageUrl} />
+          <PhotoAttach imageUrl={imageUrl} onChange={(url) => setDraft((prev) => ({ ...prev, imageUrl: url }))} />
           <button
             type="submit"
             disabled={isSubmitting}

@@ -4,9 +4,12 @@ import { useTeams } from '../hooks/useTeams.js'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { useTransactions } from '../hooks/useTransactions.js'
 import { usePresets } from '../hooks/usePresets.js'
+import { useDraftState } from '../hooks/useDraftState.js'
 import { usePlayerIdentity } from '../context/PlayerIdentityContext.jsx'
 import PhotoAttach from '../components/PhotoAttach.jsx'
 import { Zap, Bookmark, Users, User } from 'lucide-react'
+
+const EMPTY_DRAFT = { entrantType: 'player', entrantId: '', pointsValue: '', reason: '', imageUrl: null }
 
 export default function BonusPage() {
   const { event } = useEvent()
@@ -17,19 +20,15 @@ export default function BonusPage() {
   const { activePlayerId } = usePlayerIdentity()
 
   const hasTeams = teams.length > 0
-  const [entrantType, setEntrantType] = useState('player')
-  const [entrantId, setEntrantId] = useState('')
-  const [pointsValue, setPointsValue] = useState('')
-  const [reason, setReason] = useState('')
-  const [imageUrl, setImageUrl] = useState(null)
+  const [draft, setDraft, clearDraft] = useDraftState(`brolympics_bonus_draft_${event.id}`, EMPTY_DRAFT)
+  const { entrantType, entrantId, pointsValue, reason, imageUrl } = draft
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
   const entrants = entrantType === 'team' ? teams : players
 
   function applyPreset(preset) {
-    setPointsValue(String(preset.points))
-    setReason(preset.label)
+    setDraft((prev) => ({ ...prev, pointsValue: String(preset.points), reason: preset.label }))
   }
 
   async function handleSubmit(e) {
@@ -46,10 +45,7 @@ export default function BonusPage() {
         image_url: imageUrl,
         created_by_player_id: activePlayerId,
       })
-      setEntrantId('')
-      setPointsValue('')
-      setReason('')
-      setImageUrl(null)
+      clearDraft()
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2000)
     } finally {
@@ -102,10 +98,7 @@ export default function BonusPage() {
               <button
                 key={val}
                 type="button"
-                onClick={() => {
-                  setEntrantType(val)
-                  setEntrantId('')
-                }}
+                onClick={() => setDraft((prev) => ({ ...prev, entrantType: val, entrantId: '' }))}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
                   entrantType === val
                     ? 'bg-[var(--accent)] text-black'
@@ -120,7 +113,7 @@ export default function BonusPage() {
 
         <select
           value={entrantId}
-          onChange={(e) => setEntrantId(e.target.value)}
+          onChange={(e) => setDraft((prev) => ({ ...prev, entrantId: e.target.value }))}
           className="min-h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-primary)]"
         >
           <option value="">Select {entrantType === 'team' ? 'a team' : 'a player'}…</option>
@@ -136,20 +129,20 @@ export default function BonusPage() {
             type="number"
             inputMode="numeric"
             value={pointsValue}
-            onChange={(e) => setPointsValue(e.target.value)}
+            onChange={(e) => setDraft((prev) => ({ ...prev, pointsValue: e.target.value }))}
             placeholder="Points (e.g. 10 or -5)"
             className="min-h-12 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-28"
           />
           <input
             type="text"
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => setDraft((prev) => ({ ...prev, reason: e.target.value }))}
             placeholder="Reason (e.g. Drank a beer)"
             className="min-h-12 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
           />
         </div>
 
-        <PhotoAttach imageUrl={imageUrl} onChange={setImageUrl} />
+        <PhotoAttach imageUrl={imageUrl} onChange={(url) => setDraft((prev) => ({ ...prev, imageUrl: url }))} />
 
         <button
           type="submit"
