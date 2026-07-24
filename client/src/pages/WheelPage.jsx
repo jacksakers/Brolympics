@@ -6,7 +6,7 @@ import { useWheelOptions } from '../hooks/useWheelOptions.js'
 import { usePlayerIdentity } from '../context/PlayerIdentityContext.jsx'
 import PhotoAttach from '../components/PhotoAttach.jsx'
 import SpinningWheel from '../components/wheel/SpinningWheel.jsx'
-import { Sparkles, Skull, Zap, Users, Dices, Plus, X, RotateCcw, Undo2 } from 'lucide-react'
+import { Sparkles, Skull, Zap, Users, Dices, Plus, X, Undo2 } from 'lucide-react'
 
 const MODES = [
   { id: 'penalty', label: 'Penalty', Icon: Skull },
@@ -17,7 +17,7 @@ const MODES = [
 
 /** Editable list of slices for one wheel mode, with an optional point
  * value per slice (prefilled into the bonus popup when it's spun). */
-function EditableSliceList({ options, addOption, removeOption, resetToDefaults, placeholder }) {
+function EditableSliceList({ options, addOption, removeOption, placeholder }) {
   const [draftLabel, setDraftLabel] = useState('')
   const [draftPoints, setDraftPoints] = useState('')
 
@@ -79,14 +79,6 @@ function EditableSliceList({ options, addOption, removeOption, resetToDefaults, 
             className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-[var(--accent)] px-3 text-sm font-bold text-black disabled:opacity-50"
           >
             <Plus size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={resetToDefaults}
-            aria-label="Reset to defaults"
-            className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[var(--border)] px-3 text-xs text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
-            <RotateCcw size={12} />
           </button>
         </div>
       </form>
@@ -150,10 +142,11 @@ function PlayerWheelPanel({ players, excludedIds, onRemove, onAddBack }) {
   )
 }
 
-/** Popup shown once a penalty/challenge/custom slice is spun: pick who
- * it applies to, optionally tweak the text/photo, and log it as a
- * bonus-point transaction in one tap. */
-function WheelBonusModal({ option, players, onSubmit, onClose }) {
+/** Inline panel shown below the "wheel has spoken" result once a
+ * penalty/challenge/custom slice is spun: pick who it applies to,
+ * optionally tweak the text/photo, and log it as a bonus-point
+ * transaction in one tap. */
+function WheelBonusPanel({ option, players, onSubmit, onClose }) {
   const [playerId, setPlayerId] = useState('')
   const [reason, setReason] = useState(option.label)
   const [pointsValue, setPointsValue] = useState(option.points != null ? String(option.points) : '')
@@ -175,71 +168,62 @@ function WheelBonusModal({ option, players, onSubmit, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="wheel-bonus-title"
-        className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-2xl"
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 id="wheel-bonus-title" className="text-base font-bold text-[var(--text-primary)]">
-            Log It
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-          >
-            <X size={18} />
-          </button>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-base font-bold text-[var(--text-primary)]">Log It</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Dismiss"
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <select
+          value={playerId}
+          onChange={(e) => setPlayerId(e.target.value)}
+          required
+          className="min-h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 py-3 text-sm text-[var(--text-primary)]"
+        >
+          <option value="">Select a player…</option>
+          {players.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            type="number"
+            inputMode="numeric"
+            value={pointsValue}
+            onChange={(e) => setPointsValue(e.target.value)}
+            placeholder="Points (e.g. 10 or -5)"
+            className="min-h-12 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-32"
+          />
+          <input
+            type="text"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Reason"
+            className="min-h-12 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <select
-            value={playerId}
-            onChange={(e) => setPlayerId(e.target.value)}
-            required
-            className="min-h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 py-3 text-sm text-[var(--text-primary)]"
-          >
-            <option value="">Select a player…</option>
-            {players.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+        <PhotoAttach imageUrl={imageUrl} onChange={setImageUrl} />
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              type="number"
-              inputMode="numeric"
-              value={pointsValue}
-              onChange={(e) => setPointsValue(e.target.value)}
-              placeholder="Points (e.g. 10 or -5)"
-              className="min-h-12 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-32"
-            />
-            <input
-              type="text"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Reason"
-              className="min-h-12 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-            />
-          </div>
-
-          <PhotoAttach imageUrl={imageUrl} onChange={setImageUrl} />
-
-          <button
-            type="submit"
-            disabled={isSubmitting || !canSubmit}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50 hover:bg-[var(--accent-hover)] transition-colors"
-          >
-            <Zap size={16} /> Award Points
-          </button>
-        </form>
-      </div>
+        <button
+          type="submit"
+          disabled={isSubmitting || !canSubmit}
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50 hover:bg-[var(--accent-hover)] transition-colors"
+        >
+          <Zap size={16} /> Award Points
+        </button>
+      </form>
     </div>
   )
 }
@@ -336,7 +320,6 @@ export default function WheelPage() {
           options={editableByMode[mode].options}
           addOption={editableByMode[mode].addOption}
           removeOption={editableByMode[mode].removeOption}
-          resetToDefaults={editableByMode[mode].resetToDefaults}
           placeholder={mode === 'custom' ? 'Type a custom option…' : 'Add a slice…'}
         />
       )}
@@ -365,7 +348,7 @@ export default function WheelPage() {
       )}
 
       {pendingOption && (
-        <WheelBonusModal
+        <WheelBonusPanel
           option={pendingOption}
           players={players}
           onSubmit={handleBonusSubmit}
