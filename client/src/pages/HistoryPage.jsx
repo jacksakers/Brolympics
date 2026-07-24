@@ -98,7 +98,7 @@ export default function HistoryPage() {
           <History size={20} className="text-[var(--accent)]" />
           <h2 className="text-lg font-bold text-[var(--text-primary)]">History</h2>
         </div>
-        {transactions.length > 0 && (
+        {/* {transactions.length > 0 && (
           <button
             type="button"
             onClick={() => exportCSV(transactions, players, teams, games)}
@@ -106,7 +106,7 @@ export default function HistoryPage() {
           >
             <Download size={14} /> Export CSV
           </button>
-        )}
+        )} */}
       </div>
 
       {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
@@ -176,12 +176,21 @@ export default function HistoryPage() {
                 </div>
               </div>
               {tx.image_url && (
-                <img
-                  src={tx.image_url}
-                  alt="Bonus"
-                  className="mt-3 w-full max-h-48 rounded-xl object-cover"
-                  onError={(e) => (e.target.style.display = 'none')}
-                />
+                <a
+                  href={tx.image_url}
+                  download
+                  className="group relative mt-3 flex max-h-64 items-center justify-center overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-base)]"
+                >
+                  <img
+                    src={tx.image_url}
+                    alt="Bonus"
+                    className="max-h-64 w-full object-contain"
+                    onError={(e) => (e.target.parentElement.style.display = 'none')}
+                  />
+                  <span className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-xs font-semibold text-white opacity-80 transition-opacity group-hover:opacity-100">
+                    <Download size={12} /> Save
+                  </span>
+                </a>
               )}
               <ReactionBar
                 reactions={reactionsFor(tx)}

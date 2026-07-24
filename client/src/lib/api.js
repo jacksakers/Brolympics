@@ -160,3 +160,29 @@ export async function uploadImage(file) {
   if (!res.ok) throw new Error('Upload failed')
   return res.json()
 }
+
+// --- Wheel options -----------------------------------------------------------
+
+/** @param {number} eventId @param {'penalty'|'challenge'|'custom'} [mode] */
+export function fetchWheelOptions(eventId, mode) {
+  const query = mode ? `event_id=${eventId}&mode=${mode}` : `event_id=${eventId}`
+  return request(`/wheel-options?${query}`)
+}
+
+/** @param {{event_id: number, mode: 'penalty'|'challenge'|'custom', label: string}} data */
+export function createWheelOption(data) {
+  return request('/wheel-options', { method: 'POST', body: JSON.stringify(data) })
+}
+
+/** @param {number} id */
+export function deleteWheelOption(id) {
+  return request(`/wheel-options/${id}`, { method: 'DELETE' })
+}
+
+/** @param {number} eventId @param {'penalty'|'challenge'|'custom'} mode */
+export function resetWheelOptions(eventId, mode) {
+  return request('/wheel-options/reset', {
+    method: 'POST',
+    body: JSON.stringify({ event_id: eventId, mode }),
+  })
+}

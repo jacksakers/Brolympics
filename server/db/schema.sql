@@ -74,8 +74,22 @@ CREATE TABLE IF NOT EXISTS reactions (
   UNIQUE (transaction_id, player_id, emoji)
 );
 
+-- Editable slice lists for the Wheel of Destiny, shared across all
+-- devices for an event (see docs/new_features.txt "Multi-Wheel Engine").
+-- Tiebreaker has no stored rows — it's always computed live from the
+-- leaderboard.
+CREATE TABLE IF NOT EXISTS wheel_options (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+  mode TEXT NOT NULL CHECK (mode IN ('penalty', 'challenge', 'custom')),
+  label TEXT NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_teams_event ON teams (event_id);
 CREATE INDEX IF NOT EXISTS idx_players_event ON players (event_id);
 CREATE INDEX IF NOT EXISTS idx_games_event ON games (event_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_event ON transactions (event_id);
 CREATE INDEX IF NOT EXISTS idx_reactions_transaction ON reactions (transaction_id);
+CREATE INDEX IF NOT EXISTS idx_wheel_options_event_mode ON wheel_options (event_id, mode);

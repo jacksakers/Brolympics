@@ -36,16 +36,16 @@ function EditableSliceList({ options, addOption, removeOption, resetToDefaults, 
   return (
     <div className="space-y-2">
       <ul className="flex flex-wrap gap-2">
-        {options.map((label, i) => (
+        {options.map((option) => (
           <li
-            key={`${label}-${i}`}
+            key={option.id}
             className="flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg-card)] py-1 pl-3 pr-1.5 text-xs text-[var(--text-secondary)]"
           >
-            {label}
+            {option.label}
             <button
               type="button"
-              onClick={() => removeOption(i)}
-              aria-label={`Remove ${label}`}
+              onClick={() => removeOption(option.id)}
+              aria-label={`Remove ${option.label}`}
               className="rounded-full p-0.5 text-[var(--text-muted)] hover:text-red-400"
             >
               <X size={12} />
@@ -103,7 +103,7 @@ export default function WheelPage() {
   const slices =
     mode === 'tiebreaker'
       ? (tiedGroups[tieGroupIndex]?.map((r) => r.name) ?? [])
-      : editableByMode[mode].options
+      : editableByMode[mode].options.map((o) => o.label)
 
   function handleResult(label) {
     setWinner(label)

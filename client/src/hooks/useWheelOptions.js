@@ -1,75 +1,54 @@
-import { useEffect, useState } from 'react'
-
-// Starter slices so the wheel is fun out of the box; fully editable per
-// event and persisted locally (see docs/new_features.txt "Multi-Wheel
-// Engine"). Tiebreaker has no defaults — it's always computed live from
-// the leaderboard, and Custom starts blank for spontaneous bets.
-const DEFAULTS = {
-  penalty: [
-    'Drink a mystery mix',
-    'Play next game left-handed',
-    'Wear the Shame Hat',
-    '15 pushups, right now',
-    'Sing your entrance song',
-    'Give up your seat',
-  ],
-  challenge: [
-    'Trick shot (+50 pts)',
-    'Call family, explain the app (+30 pts)',
-    'Chug water in 10s (+20 pts)',
-    'High-five 3 strangers (+15 pts)',
-    'Freestyle rap (+25 pts)',
-  ],
-  custom: [],
-}
-
-function storageKey(eventId, mode) {
-  return `brolympics_wheel_${mode}_${eventId}`
-}
-
-function readOptions(eventId, mode) {
-  if (!eventId) return DEFAULTS[mode] ?? []
-  try {
-    const raw = localStorage.getItem(storageKey(eventId, mode))
-    return raw ? JSON.parse(raw) : (DEFAULTS[mode] ?? [])
-  } catch {
-    return DEFAULTS[mode] ?? []
-  }
-}
+import { useCallback, useEffect, useState } from 'react'
+import {
+  fetchWheelOptions,
+  createWheelOption,
+  deleteWheelOption,
+  resetWheelOptions,
+} from '../lib/api.js'
 
 /**
  * Manages the editable slice list for a given Wheel of Destiny mode,
- * persisted per-event in localStorage since it's a party customization
- * rather than shared event data.
+ * stored server-side per event so every device sees the same slices
+ * (see docs/new_features.txt "Multi-Wheel Engine").
  *
  * @param {number|undefined} eventId
  * @param {'penalty'|'challenge'|'custom'} mode
  */
 export function useWheelOptions(eventId, mode) {
-  const [options, setOptions] = useState(() => readOptions(eventId, mode))
+  const [options, setOptions] = useState([])
+  const [isLoading, setIsLoading] = useState(Boolean(eventId))
 
-  useEffect(() => {
-    setOptions(readOptions(eventId, mode))
+  const refresh = useCallback(async () => {
+    if (!eventId) return
+    setIsLoading(true)
+    try {
+      setOptions(await fetchWheelOptions(eventId, mode))
+    } finally {
+      setIsLoading(false)
+    }
   }, [eventId, mode])
 
   useEffect(() => {
-    if (!eventId) return
-    localStorage.setItem(storageKey(eventId, mode), JSON.stringify(options))
-  }, [eventId, mode, options])
+    refresh()
+  }, [refresh])
 
-  function addOption(label) {
+  async function addOption(label) {
     const trimmed = label.trim()
-    if (!trimmed) return
-    setOptions((prev) => [...prev, trimmed])
+    if (!trimmed || !eventId) return
+    await createWheelOption({ event_id: eventId, mode, label: trimmed })
+    await refresh()
   }
 
-  function removeOption(index) {
-    setOptions((prev) => prev.filter((_, i) => i !== index))
+  async function removeOption(id) {
+    await deleteWheelOption(id)
+    await refresh()
   }
 
-  function resetToDefaults() {
-    setOptions(DEFAULTS[mode] ?? [])
+  async function resetToDefaults() {
+    if (!eventId) return
+    await resetWheelOptions(eventId, mode)
+    await refresh()
   }
 
-  return { options, addOption, removeOption, resetToDefaults }
+  return { options, isLoading, addOption, removeOption, resetToDefaults }
 }

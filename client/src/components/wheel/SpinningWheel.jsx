@@ -58,10 +58,9 @@ export default function SpinningWheel({ slices, onResult }) {
             transitionDuration: spinning ? `${SPIN_DURATION_MS}ms` : '0ms',
             transitionTimingFunction: 'cubic-bezier(0.15, 0.65, 0.25, 1)',
           }}
-        />
-        {n > 0 && (
-          <div className="absolute inset-0">
-            {slices.map((label, i) => {
+        >
+          {n > 0 &&
+            slices.map((label, i) => {
               const midAngle = anglePer * i + anglePer / 2
               return (
                 <div
@@ -69,17 +68,26 @@ export default function SpinningWheel({ slices, onResult }) {
                   className="absolute left-1/2 top-1/2 h-0 w-0"
                   style={{ transform: `rotate(${midAngle}deg)` }}
                 >
+                  {/*
+                    conic-gradient's 0deg reference points straight up
+                    (12 o'clock), but this div's own local "0deg" (before
+                    rotation) points right (3 o'clock) since the span is
+                    offset via `left`. Anchoring the span above the
+                    origin via `top` instead keeps it in the same 12
+                    o'clock reference frame as the gradient, so rotating
+                    by `midAngle` lands it in the middle of its slice
+                    instead of on a color boundary.
+                  */}
                   <span
-                    className="absolute max-w-[6.5rem] -translate-y-1/2 truncate text-[10px] font-bold text-black"
-                    style={{ left: `${radius * 0.32}px` }}
+                    className="absolute max-w-[6.5rem] -translate-x-1/2 truncate text-[10px] font-bold text-black"
+                    style={{ top: `-${radius * 0.32}px` }}
                   >
                     {label}
                   </span>
                 </div>
               )
             })}
-          </div>
-        )}
+        </div>
         <div className="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[var(--bg-base)] bg-[var(--accent)] shadow-lg" />
       </div>
       <button

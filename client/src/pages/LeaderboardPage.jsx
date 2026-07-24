@@ -13,7 +13,7 @@ const RANK_STYLES = [
 ]
 
 /** Player photo, or a small stack of team member photos, for a leaderboard row. */
-function RankAvatar({ entrant }) {
+function RankAvatar({ entrant, onExpand }) {
   const avatars = entrant.image_url ? [entrant.image_url] : entrant.memberAvatars ?? []
 
   if (avatars.length === 0) {
@@ -31,7 +31,11 @@ function RankAvatar({ entrant }) {
           key={url + i}
           src={url}
           alt=""
-          className="h-8 w-8 rounded-full border-2 border-[var(--bg-card)] object-cover"
+          onClick={(e) => {
+            e.stopPropagation()
+            onExpand(url, entrant.name)
+          }}
+          className="h-8 w-8 cursor-pointer rounded-full border-2 border-[var(--bg-card)] object-cover transition-transform hover:scale-105"
           style={{ zIndex: avatars.length - i }}
           onError={(e) => (e.target.style.display = 'none')}
         />
@@ -46,6 +50,7 @@ export default function LeaderboardPage() {
   const { players, isLoading: playersLoading } = usePlayers(event.id)
   const { transactions, isLoading: txLoading, error } = useTransactions(event.id)
   const [view, setView] = useState('teams')
+  const [expandedAvatar, setExpandedAvatar] = useState(null)
 
   const isLoading = teamsLoading || playersLoading || txLoading
   const hasTeams = teams.length > 0
@@ -117,7 +122,10 @@ export default function LeaderboardPage() {
               >
                 {style ? style.label : index + 1}
               </div>
-              <RankAvatar entrant={entrant} />
+              <RankAvatar
+                entrant={entrant}
+                onExpand={(url, name) => setExpandedAvatar({ url, name })}
+              />
               <span className="flex-1 font-semibold text-[var(--text-primary)]">{entrant.name}</span>
               <div className="flex items-baseline gap-1">
                 <span className={`text-xl font-black ${style ? style.text : 'text-[var(--accent)]'}`}>{entrant.total}</span>
@@ -127,6 +135,23 @@ export default function LeaderboardPage() {
           )
         })}
       </ol>
+
+      {expandedAvatar && (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setExpandedAvatar(null)}
+          onKeyDown={(e) => e.key === 'Escape' && setExpandedAvatar(null)}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-black/80 p-6"
+        >
+          <img
+            src={expandedAvatar.url}
+            alt={expandedAvatar.name}
+            className="max-h-[70vh] max-w-full rounded-2xl object-contain shadow-2xl"
+          />
+          <p className="text-sm font-semibold text-white">{expandedAvatar.name}</p>
+        </div>
+      )}
     </section>
   )
 }
