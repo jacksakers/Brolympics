@@ -4,7 +4,7 @@ import TurnOrderPanel from './TurnOrderPanel.jsx'
 import { Gamepad2, BookOpen, ChevronDown, ChevronUp, Trash2, Shuffle, Plus, ImageIcon } from 'lucide-react'
 
 export default function GamesSection({ eventId, teams, players }) {
-  const { games, isLoading, error, addGame, editGame, removeGame } = useGames(eventId)
+  const { games, isLoading, error, addGame, editGame, removeGame, saveTurnOrder } = useGames(eventId)
   const [newGameName, setNewGameName] = useState('')
   const [newGameFormat, setNewGameFormat] = useState('individual')
   const [expandedId, setExpandedId] = useState(null)
@@ -108,7 +108,13 @@ export default function GamesSection({ eventId, teams, players }) {
                   )}
                 </div>
 
-                {isExpanded && <TurnOrderPanel entrants={entrantsFor(game.format)} />}
+                {isExpanded && (
+                  <TurnOrderPanel
+                    game={game}
+                    entrants={entrantsFor(game.format)}
+                    onSave={(entrantIds) => saveTurnOrder(game.id, entrantIds)}
+                  />
+                )}
               </div>
             </li>
           )

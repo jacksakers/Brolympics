@@ -29,7 +29,9 @@ CREATE TABLE IF NOT EXISTS players (
 -- awarded to a player_id. points_config is a free-form JSON string (e.g.
 -- placement -> points) interpreted by the client. rules is a free-form
 -- text description of how the game is played; image_url is an optional
--- illustrative photo/diagram.
+-- illustrative photo/diagram. turn_order is a JSON array of team/player
+-- ids (matching format) recording the last-generated turn order, shared
+-- across devices and shown on the Games tab.
 CREATE TABLE IF NOT EXISTS games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
@@ -38,6 +40,7 @@ CREATE TABLE IF NOT EXISTS games (
   points_config TEXT,
   rules TEXT,
   image_url TEXT,
+  turn_order TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

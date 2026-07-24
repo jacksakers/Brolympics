@@ -6,7 +6,7 @@ import { usePlayers } from '../hooks/usePlayers.js'
 import { useTransactions } from '../hooks/useTransactions.js'
 import { usePlayerIdentity } from '../context/PlayerIdentityContext.jsx'
 import GameScoreForm from '../components/games/GameScoreForm.jsx'
-import { Gamepad2, ChevronDown, ChevronUp, BookOpen, Users, User } from 'lucide-react'
+import { Gamepad2, ChevronDown, ChevronUp, BookOpen, Users, User, ListOrdered } from 'lucide-react'
 
 export default function GamesPage() {
   const { event } = useEvent()
@@ -21,6 +21,12 @@ export default function GamesPage() {
   const entrants = selectedGame
     ? selectedGame.format === 'team' ? teams : players
     : []
+
+  function turnOrderNames(game) {
+    if (!Array.isArray(game.turn_order) || game.turn_order.length === 0) return null
+    const pool = game.format === 'team' ? teams : players
+    return game.turn_order.map((id) => pool.find((e) => e.id === id)?.name).filter(Boolean)
+  }
 
   async function handleSubmitScores(scores, imageUrl) {
     for (const { entrantId, points } of scores) {
@@ -107,6 +113,22 @@ export default function GamesPage() {
                       className="mb-4 w-full max-h-48 rounded-xl object-cover"
                       onError={(e) => (e.target.style.display = 'none')}
                     />
+                  )}
+                  {turnOrderNames(game) && (
+                    <div className="mb-4 flex gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] p-3">
+                      <ListOrdered size={14} className="mt-0.5 shrink-0 text-[var(--accent)]" />
+                      <div className="min-w-0 flex-1">
+                        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">Turn Order</p>
+                        <ol className="space-y-0.5">
+                          {turnOrderNames(game).map((name, i) => (
+                            <li key={`${name}-${i}`} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                              <span className="w-4 text-center font-bold text-[var(--text-muted)]">{i + 1}</span>
+                              {name}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
                   )}
                   <GameScoreForm game={selectedGame} entrants={entrants} onSubmitScores={handleSubmitScores} />
                 </div>

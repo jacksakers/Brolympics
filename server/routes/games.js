@@ -75,6 +75,14 @@ router.post('/', (req, res) => {
 })
 
 /**
+ * Validates a turn_order payload: must be an array of positive integers
+ * (team/player ids), or null to clear it.
+ */
+function isValidTurnOrder(value) {
+  return value === null || (Array.isArray(value) && value.every((id) => Number.isInteger(id)))
+}
+
+/**
  * PUT /api/games/:id
  * Body: { name?: string, format?: 'team'|'individual', points_config?: object, rules?: string, image_url?: string }
  */
@@ -96,9 +104,19 @@ router.put('/:id', (req, res) => {
   const rules = 'rules' in req.body ? req.body.rules : existing.rules
   const imageUrl = 'image_url' in req.body ? req.body.image_url : existing.image_url
 
+  if ('turn_order' in req.body && !isValidTurnOrder(req.body.turn_order)) {
+    return res.status(400).json({ error: 'turn_order must be an array of ids, or null' })
+  }
+  const turnOrder =
+    'turn_order' in req.body
+      ? req.body.turn_order
+        ? JSON.stringify(req.body.turn_order)
+        : null
+      : existing.turn_order
+
   db.prepare(
-    'UPDATE games SET name = ?, format = ?, points_config = ?, rules = ?, image_url = ? WHERE id = ?',
-  ).run(name, format, pointsConfig, rules, imageUrl, req.params.id)
+    'UPDATE games SET name = ?, format = ?, points_config = ?, rules = ?, image_url = ?, turn_order = ? WHERE id = ?',
+  ).run(name, format, pointsConfig, rules, imageUrl, turnOrder, req.params.id)
 
   const game = db.prepare('SELECT * FROM games WHERE id = ?').get(req.params.id)
   res.json(game)
