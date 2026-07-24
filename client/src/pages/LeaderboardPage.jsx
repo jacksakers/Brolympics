@@ -31,6 +31,8 @@ function RankAvatar({ entrant, onExpand }) {
           key={url + i}
           src={url}
           alt=""
+          loading="lazy"
+          decoding="async"
           onClick={(e) => {
             e.stopPropagation()
             onExpand(url, entrant.name)

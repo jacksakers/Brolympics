@@ -51,6 +51,8 @@ export default function WhoAmIModal({ players }) {
                 <img
                   src={player.image_url}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="h-10 w-10 rounded-full object-cover"
                   onError={(e) => (e.target.style.display = 'none')}
                 />

@@ -92,6 +92,8 @@ export default function PlayersSection({ playersState, teams }) {
                         <img
                           src={player.image_url}
                           alt={player.name}
+                          loading="lazy"
+                          decoding="async"
                           className="h-8 w-8 rounded-full object-cover"
                           onError={(e) => (e.target.style.display = 'none')}
                         />

@@ -184,6 +184,8 @@ export default function HistoryPage() {
                   <img
                     src={tx.image_url}
                     alt="Bonus"
+                    loading="lazy"
+                    decoding="async"
                     className="max-h-64 w-full object-contain"
                     onError={(e) => (e.target.parentElement.style.display = 'none')}
                   />

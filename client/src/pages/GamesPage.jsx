@@ -110,6 +110,8 @@ export default function GamesPage() {
                     <img
                       src={game.image_url}
                       alt={game.name}
+                      loading="lazy"
+                      decoding="async"
                       className="mb-4 w-full max-h-48 rounded-xl object-cover"
                       onError={(e) => (e.target.style.display = 'none')}
                     />

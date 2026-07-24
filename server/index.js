@@ -43,7 +43,12 @@ app.use('/api/reactions', reactionsRouter)
 app.use('/api/uploads', uploadsRouter)
 app.use('/api/wheel-options', wheelOptionsRouter)
 app.use('/api/presets', presetsRouter)
-app.use('/uploads', express.static(uploadsDir))
+// Uploaded filenames are content-addressed (random UUIDs assigned once
+// at upload time, see routes/uploads.js) and never mutated in place, so
+// it's safe to tell browsers/proxies to cache them aggressively. This
+// avoids re-fetching the same photo over and over on a slow network
+// (e.g. Tailscale) every time a page re-renders.
+app.use('/uploads', express.static(uploadsDir, { maxAge: '30d', immutable: true }))
 
 // In production, serve the built Vite client as static assets.
 if (process.env.NODE_ENV === 'production') {

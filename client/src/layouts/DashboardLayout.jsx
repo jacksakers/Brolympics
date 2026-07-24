@@ -20,6 +20,7 @@ function IdentityChip() {
         <img
           src={activePlayer.image_url}
           alt=""
+          decoding="async"
           className="h-6 w-6 rounded-full object-cover"
           onError={(e) => (e.target.style.display = 'none')}
         />
