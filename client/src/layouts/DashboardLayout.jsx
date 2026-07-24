@@ -1,10 +1,10 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, NavLink, Outlet } from 'react-router-dom'
 import { useEvent } from '../context/EventContext.jsx'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { PlayerIdentityProvider, usePlayerIdentity } from '../context/PlayerIdentityContext.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import WhoAmIModal from '../components/WhoAmIModal.jsx'
-import { Trophy, User } from 'lucide-react'
+import { Trophy, User, Settings } from 'lucide-react'
 
 function IdentityChip() {
   const { activePlayer, openPicker } = usePlayerIdentity()
@@ -14,7 +14,7 @@ function IdentityChip() {
       type="button"
       onClick={openPicker}
       aria-label="Switch player identity"
-      className="ml-auto flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] py-1 pl-1 pr-3 hover:border-[var(--accent)] transition-colors"
+      className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-card)] py-1 pl-1 pr-3 hover:border-[var(--accent)] transition-colors"
     >
       {activePlayer?.image_url ? (
         <img
@@ -57,14 +57,31 @@ export default function DashboardLayout() {
       <div className="min-h-screen bg-[var(--bg-base)] pb-16">
         <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--bg-surface)]/90 backdrop-blur-md px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent-dim)]">
-              <Trophy size={16} className="text-[var(--accent)]" />
+            <NavLink to="/event" end className="flex min-w-0 items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-dim)]">
+                <Trophy size={16} className="text-[var(--accent)]" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-sm font-bold text-[var(--text-primary)] leading-tight">{event.name}</h1>
+                <p className="text-xs text-[var(--text-muted)] font-mono tracking-widest">CODE: {event.secret_code}</p>
+              </div>
+            </NavLink>
+            <div className="ml-auto flex items-center gap-2">
+              {players.length > 0 && <IdentityChip />}
+              <NavLink
+                to="/event/settings"
+                aria-label="Settings"
+                className={({ isActive }) =>
+                  `flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                    isActive
+                      ? 'border-[var(--accent)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                      : 'border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  }`
+                }
+              >
+                <Settings size={15} />
+              </NavLink>
             </div>
-            <div>
-              <h1 className="text-sm font-bold text-[var(--text-primary)] leading-tight">{event.name}</h1>
-              <p className="text-xs text-[var(--text-muted)] font-mono tracking-widest">CODE: {event.secret_code}</p>
-            </div>
-            {players.length > 0 && <IdentityChip />}
           </div>
         </header>
 

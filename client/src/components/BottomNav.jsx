@@ -1,13 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { Trophy, Gamepad2, Zap, Sparkles, History, Settings } from 'lucide-react'
+import { Gamepad2, Zap, Sparkles, History } from 'lucide-react'
 
 const TABS = [
-  { to: '/event', label: 'Board', Icon: Trophy, end: true },
   { to: '/event/games', label: 'Games', Icon: Gamepad2 },
   { to: '/event/bonus', label: 'Bonus', Icon: Zap },
   { to: '/event/wheel', label: 'Wheel', Icon: Sparkles },
   { to: '/event/history', label: 'History', Icon: History },
-  { to: '/event/settings', label: 'Settings', Icon: Settings },
 ]
 
 export default function BottomNav() {
