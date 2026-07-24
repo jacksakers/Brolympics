@@ -34,3 +34,62 @@ sudo ./deploy/install.sh
 Builds the client, installs the server as a systemd service, and prints
 the command to expose it publicly via Tailscale Funnel. See
 [deploy/README.md](deploy/README.md) for the full walkthrough.
+
+## Running manually (without systemd)
+
+For quick mobile testing or when you'd rather not install the systemd
+service, you can build and run the production server by hand. This
+serves the bundled client (a handful of small, minified files) instead
+of the Vite dev server's hundreds of unbundled modules, which is
+dramatically faster on a phone over Tailscale/cellular.
+
+```bash
+# Build the client (outputs to client/dist).
+npm run build
+
+# Run the server in production mode so it serves client/dist. This
+# blocks the terminal — use the background variant below to keep it
+# running after you disconnect.
+NODE_ENV=production npm start --prefix server
+```
+
+To run it detached in the background (survives closing the terminal):
+
+```bash
+cd server
+NODE_ENV=production nohup node index.js > /tmp/brolympics.log 2>&1 < /dev/null &
+disown
+```
+
+Check it's up and see the logs:
+
+```bash
+curl -s http://localhost:3000/api/health
+tail -f /tmp/brolympics.log
+```
+
+To restart after pulling new code or rebuilding the client:
+
+```bash
+pkill -f 'node index.js'          # stop the running server
+cd client && npm run build && cd ..  # rebuild if client code changed
+cd server
+NODE_ENV=production nohup node index.js > /tmp/brolympics.log 2>&1 < /dev/null &
+disown
+```
+
+### Exposing it with Tailscale Funnel
+
+```bash
+# Point the funnel at the production server (port 3000) and keep it
+# running in the background (--bg), rather than the foreground mode
+# that stops funneling as soon as the command exits/is interrupted.
+sudo tailscale funnel --bg 3000
+
+# Check what's currently funneled.
+tailscale funnel status
+
+# Stop funneling.
+sudo tailscale funnel --https=443 off
+```
+
