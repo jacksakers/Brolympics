@@ -120,9 +120,12 @@ export function deleteGame(id) {
 
 // --- Transactions ----------------------------------------------------------
 
-/** @param {number} eventId */
-export function fetchTransactions(eventId) {
-  return request(`/transactions?event_id=${eventId}`)
+/** @param {number} eventId @param {{limit?: number, offset?: number}} [options] */
+export function fetchTransactions(eventId, { limit, offset } = {}) {
+  const params = new URLSearchParams({ event_id: eventId })
+  if (limit != null) params.set('limit', limit)
+  if (offset != null) params.set('offset', offset)
+  return request(`/transactions?${params}`)
 }
 
 /**

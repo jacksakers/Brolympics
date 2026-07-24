@@ -3,21 +3,41 @@ import db from '../db/index.js'
 
 const router = Router()
 
+const MAX_PAGE_LIMIT = 200
+
 /**
- * GET /api/transactions?event_id=1
- * Lists all transactions for an event, newest first, for the
- * History/Audit Log and leaderboard calculations.
+ * GET /api/transactions?event_id=1[&limit=20&offset=0]
+ * Lists transactions for an event, newest first, for the History/Audit
+ * Log and leaderboard calculations. `limit`/`offset` are optional — the
+ * History feed uses them to page through older entries instead of
+ * fetching (and rendering, and loading every photo for) the entire
+ * history at once; callers that need the full list for score totals
+ * (leaderboard, team generator, wheel weighting) omit them.
  */
 router.get('/', (req, res) => {
-  const { event_id: eventId } = req.query
+  const { event_id: eventId, limit, offset } = req.query
 
   if (!eventId) {
     return res.status(400).json({ error: 'event_id query param is required' })
   }
 
-  const transactions = db
-    .prepare('SELECT * FROM transactions WHERE event_id = ? ORDER BY id DESC')
-    .all(eventId)
+  let sql = 'SELECT * FROM transactions WHERE event_id = ? ORDER BY id DESC'
+  const params = [eventId]
+
+  if (limit !== undefined) {
+    const limitNum = Number(limit)
+    const offsetNum = offset !== undefined ? Number(offset) : 0
+    if (!Number.isInteger(limitNum) || limitNum <= 0 || limitNum > MAX_PAGE_LIMIT) {
+      return res.status(400).json({ error: `limit must be an integer between 1 and ${MAX_PAGE_LIMIT}` })
+    }
+    if (!Number.isInteger(offsetNum) || offsetNum < 0) {
+      return res.status(400).json({ error: 'offset must be a non-negative integer' })
+    }
+    sql += ' LIMIT ? OFFSET ?'
+    params.push(limitNum, offsetNum)
+  }
+
+  const transactions = db.prepare(sql).all(...params)
 
   res.json(transactions)
 })

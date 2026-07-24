@@ -53,12 +53,22 @@ const TYPE_BADGE = {
   reversal: { label: 'Undo', Icon: RotateCcw, cls: 'bg-red-400/10 text-red-400 border-red-400/30' },
 }
 
+const PAGE_SIZE = 5
+
 export default function HistoryPage() {
   const { event } = useEvent()
   const { teams } = useTeams(event.id)
   const { players } = usePlayers(event.id)
   const { games } = useGames(event.id)
-  const { transactions, isLoading, error, undoTransaction } = useTransactions(event.id)
+  const {
+    transactions,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+    error,
+    undoTransaction,
+  } = useTransactions(event.id, { pageSize: PAGE_SIZE })
   const { reactions, react } = useReactions(event.id)
   const { activePlayer } = usePlayerIdentity()
 
@@ -202,6 +212,17 @@ export default function HistoryPage() {
           )
         })}
       </ul>
+
+      {hasMore && (
+        <button
+          type="button"
+          onClick={loadMore}
+          disabled={isLoadingMore}
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
+        >
+          {isLoadingMore ? 'Loading…' : 'Load more'}
+        </button>
+      )}
     </section>
   )
 }
