@@ -52,6 +52,15 @@ export async function fetchEventByCode(code) {
   }
 }
 
+/**
+ * Updates an event's name.
+ * @param {number} id
+ * @param {{name: string}} data
+ */
+export function updateEvent(id, data) {
+  return request(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
 // --- Teams ---------------------------------------------------------------
 
 /** @param {number} eventId */

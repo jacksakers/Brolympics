@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useEventCode } from '../hooks/useEventCode.js'
-import { createEvent, fetchEventByCode } from '../lib/api.js'
+import { createEvent, fetchEventByCode, updateEvent } from '../lib/api.js'
 
 const EventContext = createContext(null)
 
@@ -75,9 +75,22 @@ export function EventProvider({ children }) {
     setEvent(null)
   }
 
+  /** Renames the active event. */
+  async function rename(name) {
+    setError(null)
+    try {
+      const updated = await updateEvent(event.id, { name })
+      setEvent(updated)
+      return updated
+    } catch (err) {
+      setError(err.message)
+      throw err
+    }
+  }
+
   return (
     <EventContext.Provider
-      value={{ event, isLoading, error, create, join, leave }}
+      value={{ event, isLoading, error, create, join, leave, rename }}
     >
       {children}
     </EventContext.Provider>

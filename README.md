@@ -78,6 +78,13 @@ NODE_ENV=production nohup node index.js > /tmp/brolympics.log 2>&1 < /dev/null &
 disown
 ```
 
+Or just run [deploy/redeploy.sh](deploy/redeploy.sh), which does all of the
+above in one step (pass `--no-build` to skip rebuilding the client):
+
+```bash
+./deploy/redeploy.sh
+```
+
 ### Exposing it with Tailscale Funnel
 
 ```bash

@@ -8,7 +8,7 @@ import TeamsSection from '../components/settings/TeamsSection.jsx'
 import TeamGeneratorPanel from '../components/settings/TeamGeneratorPanel.jsx'
 import PlayersSection from '../components/settings/PlayersSection.jsx'
 import GamesSection from '../components/settings/GamesSection.jsx'
-import { Settings, Bookmark, Plus, X, Sliders, LogOut } from 'lucide-react'
+import { Settings, Bookmark, Plus, X, Sliders, LogOut, Pencil, Check } from 'lucide-react'
 
 function PresetsSection({ eventId }) {
   const { presets, addPreset, removePreset } = usePresets(eventId)
@@ -72,6 +72,60 @@ function PresetsSection({ eventId }) {
   )
 }
 
+function EventTitleSection() {
+  const { event, rename } = useEvent()
+  const [isEditing, setIsEditing] = useState(false)
+  const [name, setName] = useState(event.name)
+
+  function startEditing() {
+    setName(event.name)
+    setIsEditing(true)
+  }
+
+  async function handleSave(e) {
+    e.preventDefault()
+    if (!name.trim() || name.trim() === event.name) {
+      setIsEditing(false)
+      return
+    }
+    await rename(name.trim())
+    setIsEditing(false)
+  }
+
+  return (
+    <section className="space-y-3">
+      <h2 className="flex items-center gap-2 text-base font-semibold text-[var(--text-primary)]">
+        <Settings size={16} className="text-[var(--accent)]" /> Event Name
+      </h2>
+      {isEditing ? (
+        <form onSubmit={handleSave} className="flex gap-2">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="min-h-11 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)]"
+            autoFocus
+          />
+          <button type="submit" className="flex min-h-11 items-center gap-1 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black">
+            <Check size={14} />
+          </button>
+        </form>
+      ) : (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
+          <span className="min-w-0 break-words font-medium text-[var(--text-primary)]">{event.name}</span>
+          <button
+            type="button"
+            onClick={startEditing}
+            className="flex items-center gap-1 rounded-xl border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            <Pencil size={12} />
+          </button>
+        </div>
+      )}
+    </section>
+  )
+}
+
 function CustomizationSection() {
   const { settings, updateSetting } = useSettings()
   return (
@@ -121,6 +175,7 @@ export default function SettingsPage() {
         <h1 className="text-lg font-bold text-[var(--text-primary)]">Settings</h1>
       </div>
 
+      <EventTitleSection />
       <PlayersSection playersState={playersState} teams={teamsState.teams} />
       <TeamsSection teamsState={teamsState} />
       <TeamGeneratorPanel

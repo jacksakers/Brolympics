@@ -62,4 +62,33 @@ router.get('/:id', (req, res) => {
   res.json(event)
 })
 
+/**
+ * PUT /api/events/:id
+ * Updates an event's name.
+ * Body: { name: string }
+ */
+router.put('/:id', (req, res) => {
+  const { name } = req.body
+
+  if (typeof name !== 'string' || name.trim() === '') {
+    return res.status(400).json({ error: 'name is required' })
+  }
+
+  const existing = db
+    .prepare('SELECT * FROM events WHERE id = ?')
+    .get(req.params.id)
+
+  if (!existing) {
+    return res.status(404).json({ error: 'Event not found' })
+  }
+
+  db.prepare('UPDATE events SET name = ? WHERE id = ?').run(name.trim(), req.params.id)
+
+  const event = db
+    .prepare('SELECT * FROM events WHERE id = ?')
+    .get(req.params.id)
+
+  res.json(event)
+})
+
 export default router
