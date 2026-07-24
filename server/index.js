@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import 'dotenv/config'
@@ -22,6 +23,11 @@ const PORT = process.env.PORT || 3000
 const uploadsDir = path.join(__dirname, 'uploads')
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
 
+// Gzip/deflate all responses (JSON API payloads and, in production, the
+// static client build). This matters most for phones on a slower/higher
+// latency connection (e.g. cellular or a remote Tailscale link) where
+// every extra KB over the wire costs noticeably more than on localhost.
+app.use(compression())
 app.use(cors())
 app.use(express.json())
 
