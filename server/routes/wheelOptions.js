@@ -56,17 +56,23 @@ router.get('/', (req, res) => {
 
 /**
  * POST /api/wheel-options
- * Body: { event_id: number, mode: 'penalty'|'challenge'|'custom', label: string }
- * Appends a new slice to the end of the mode's list.
+ * Body: { event_id: number, mode: 'penalty'|'challenge'|'custom', label: string,
+ *   points?: number|null }
+ * Appends a new slice to the end of the mode's list. `points` is an
+ * optional point value (e.g. a challenge worth +25) prefilled into the
+ * bonus-points popup shown when this slice is spun.
  */
 router.post('/', (req, res) => {
-  const { event_id: eventId, mode, label } = req.body
+  const { event_id: eventId, mode, label, points } = req.body
 
   if (!eventId || !VALID_MODES.has(mode)) {
     return res.status(400).json({ error: 'event_id and a valid mode are required' })
   }
   if (typeof label !== 'string' || label.trim() === '') {
     return res.status(400).json({ error: 'label is required' })
+  }
+  if (points !== undefined && points !== null && !Number.isInteger(points)) {
+    return res.status(400).json({ error: 'points must be an integer or null' })
   }
 
   const { maxPosition } = db
@@ -75,9 +81,9 @@ router.post('/', (req, res) => {
 
   const { lastInsertRowid } = db
     .prepare(
-      'INSERT INTO wheel_options (event_id, mode, label, position) VALUES (?, ?, ?, ?)',
+      'INSERT INTO wheel_options (event_id, mode, label, points, position) VALUES (?, ?, ?, ?, ?)',
     )
-    .run(eventId, mode, label.trim(), (maxPosition ?? -1) + 1)
+    .run(eventId, mode, label.trim(), points ?? null, (maxPosition ?? -1) + 1)
 
   const option = db.prepare('SELECT * FROM wheel_options WHERE id = ?').get(lastInsertRowid)
   res.status(201).json(option)

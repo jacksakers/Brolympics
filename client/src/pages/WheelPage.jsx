@@ -1,36 +1,32 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useEvent } from '../context/EventContext.jsx'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { useTransactions } from '../hooks/useTransactions.js'
 import { useWheelOptions } from '../hooks/useWheelOptions.js'
-import { calculatePlayerTotals } from '../utils/calculateScores.js'
+import { usePlayerIdentity } from '../context/PlayerIdentityContext.jsx'
+import PhotoAttach from '../components/PhotoAttach.jsx'
 import SpinningWheel from '../components/wheel/SpinningWheel.jsx'
-import { Sparkles, Skull, Zap, Scale, Dices, Plus, X, RotateCcw } from 'lucide-react'
+import { Sparkles, Skull, Zap, Users, Dices, Plus, X, RotateCcw, Undo2 } from 'lucide-react'
 
 const MODES = [
   { id: 'penalty', label: 'Penalty', Icon: Skull },
   { id: 'challenge', label: 'Challenge', Icon: Zap },
-  { id: 'tiebreaker', label: 'Tiebreaker', Icon: Scale },
+  { id: 'players', label: 'Players', Icon: Users },
   { id: 'custom', label: 'Custom', Icon: Dices },
 ]
 
-function findTiedGroups(rankings) {
-  const groups = new Map()
-  rankings.forEach((r) => {
-    const key = r.total
-    if (!groups.has(key)) groups.set(key, [])
-    groups.get(key).push(r)
-  })
-  return [...groups.values()].filter((g) => g.length > 1)
-}
-
+/** Editable list of slices for one wheel mode, with an optional point
+ * value per slice (prefilled into the bonus popup when it's spun). */
 function EditableSliceList({ options, addOption, removeOption, resetToDefaults, placeholder }) {
-  const [draft, setDraft] = useState('')
+  const [draftLabel, setDraftLabel] = useState('')
+  const [draftPoints, setDraftPoints] = useState('')
 
   function handleAdd(e) {
     e.preventDefault()
-    addOption(draft)
-    setDraft('')
+    if (!draftLabel.trim()) return
+    addOption(draftLabel, draftPoints)
+    setDraftLabel('')
+    setDraftPoints('')
   }
 
   return (
@@ -42,6 +38,11 @@ function EditableSliceList({ options, addOption, removeOption, resetToDefaults, 
             className="flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg-card)] py-1 pl-3 pr-1.5 text-xs text-[var(--text-secondary)]"
           >
             {option.label}
+            {option.points != null && (
+              <span className={`font-black ${option.points >= 0 ? 'text-[var(--success)]' : 'text-red-400'}`}>
+                {option.points >= 0 ? `+${option.points}` : option.points}
+              </span>
+            )}
             <button
               type="button"
               onClick={() => removeOption(option.id)}
@@ -54,29 +55,191 @@ function EditableSliceList({ options, addOption, removeOption, resetToDefaults, 
         ))}
         {options.length === 0 && <li className="text-xs text-[var(--text-muted)]">No slices yet — add some below.</li>}
       </ul>
-      <form onSubmit={handleAdd} className="flex gap-2">
+      <form onSubmit={handleAdd} className="flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          value={draftLabel}
+          onChange={(e) => setDraftLabel(e.target.value)}
           placeholder={placeholder}
-          className="min-h-10 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+          className="min-h-11 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
         />
-        <button
-          type="submit"
-          disabled={!draft.trim()}
-          className="flex min-h-10 items-center gap-1 rounded-xl bg-[var(--accent)] px-3 text-sm font-bold text-black disabled:opacity-50"
-        >
-          <Plus size={14} />
-        </button>
-        <button
-          type="button"
-          onClick={resetToDefaults}
-          className="flex min-h-10 items-center gap-1 rounded-xl border border-[var(--border)] px-3 text-xs text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
-        >
-          <RotateCcw size={12} />
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            value={draftPoints}
+            onChange={(e) => setDraftPoints(e.target.value)}
+            placeholder="Pts (optional)"
+            className="min-h-11 w-28 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-24 sm:flex-none"
+          />
+          <button
+            type="submit"
+            disabled={!draftLabel.trim()}
+            aria-label="Add slice"
+            className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-[var(--accent)] px-3 text-sm font-bold text-black disabled:opacity-50"
+          >
+            <Plus size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={resetToDefaults}
+            aria-label="Reset to defaults"
+            className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[var(--border)] px-3 text-xs text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          >
+            <RotateCcw size={12} />
+          </button>
+        </div>
       </form>
+    </div>
+  )
+}
+
+/** Manages which players are currently "in" the players wheel — spun
+ * players can be removed with one tap and added back just as easily.
+ * This state is intentionally ephemeral (not persisted server-side),
+ * matching the client-side turn order generator. */
+function PlayerWheelPanel({ players, excludedIds, onRemove, onAddBack }) {
+  const included = players.filter((p) => !excludedIds.has(p.id))
+  const excluded = players.filter((p) => excludedIds.has(p.id))
+
+  return (
+    <div className="space-y-2">
+      <ul className="flex flex-wrap gap-2">
+        {included.map((player) => (
+          <li
+            key={player.id}
+            className="flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg-card)] py-1 pl-3 pr-1.5 text-xs text-[var(--text-secondary)]"
+          >
+            {player.name}
+            <button
+              type="button"
+              onClick={() => onRemove(player.id)}
+              aria-label={`Remove ${player.name} from wheel`}
+              className="rounded-full p-0.5 text-[var(--text-muted)] hover:text-red-400"
+            >
+              <X size={12} />
+            </button>
+          </li>
+        ))}
+        {included.length === 0 && <li className="text-xs text-[var(--text-muted)]">No players left — add someone back below.</li>}
+      </ul>
+      {excluded.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Removed</p>
+          <ul className="flex flex-wrap gap-2">
+            {excluded.map((player) => (
+              <li
+                key={player.id}
+                className="flex items-center gap-1.5 rounded-full border border-dashed border-[var(--border)] bg-[var(--bg-card)]/50 py-1 pl-3 pr-1.5 text-xs text-[var(--text-muted)] line-through"
+              >
+                {player.name}
+                <button
+                  type="button"
+                  onClick={() => onAddBack(player.id)}
+                  aria-label={`Add ${player.name} back to wheel`}
+                  className="rounded-full p-0.5 text-[var(--text-muted)] no-underline hover:text-[var(--accent)]"
+                >
+                  <Undo2 size={12} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Popup shown once a penalty/challenge/custom slice is spun: pick who
+ * it applies to, optionally tweak the text/photo, and log it as a
+ * bonus-point transaction in one tap. */
+function WheelBonusModal({ option, players, onSubmit, onClose }) {
+  const [playerId, setPlayerId] = useState('')
+  const [reason, setReason] = useState(option.label)
+  const [pointsValue, setPointsValue] = useState(option.points != null ? String(option.points) : '')
+  const [imageUrl, setImageUrl] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const points = Number(pointsValue)
+  const canSubmit = playerId && reason.trim() && Number.isFinite(points) && points !== 0
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!canSubmit) return
+    setIsSubmitting(true)
+    try {
+      await onSubmit({ playerId: Number(playerId), points, reason: reason.trim(), imageUrl })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wheel-bonus-title"
+        className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-2xl"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 id="wheel-bonus-title" className="text-base font-bold text-[var(--text-primary)]">
+            Log It
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <select
+            value={playerId}
+            onChange={(e) => setPlayerId(e.target.value)}
+            required
+            className="min-h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 py-3 text-sm text-[var(--text-primary)]"
+          >
+            <option value="">Select a player…</option>
+            {players.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              type="number"
+              inputMode="numeric"
+              value={pointsValue}
+              onChange={(e) => setPointsValue(e.target.value)}
+              placeholder="Points (e.g. 10 or -5)"
+              className="min-h-12 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:w-32"
+            />
+            <input
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Reason"
+              className="min-h-12 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+            />
+          </div>
+
+          <PhotoAttach imageUrl={imageUrl} onChange={setImageUrl} />
+
+          <button
+            type="submit"
+            disabled={isSubmitting || !canSubmit}
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50 hover:bg-[var(--accent-hover)] transition-colors"
+          >
+            <Zap size={16} /> Award Points
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
@@ -84,35 +247,58 @@ function EditableSliceList({ options, addOption, removeOption, resetToDefaults, 
 export default function WheelPage() {
   const { event } = useEvent()
   const { players } = usePlayers(event.id)
-  const { transactions } = useTransactions(event.id)
+  const { addTransaction } = useTransactions(event.id)
+  const { activePlayerId } = usePlayerIdentity()
   const [mode, setMode] = useState('penalty')
   const [winner, setWinner] = useState(null)
-  const [tieGroupIndex, setTieGroupIndex] = useState(0)
+  const [pendingOption, setPendingOption] = useState(null)
+  const [excludedPlayerIds, setExcludedPlayerIds] = useState(new Set())
 
   const penaltyOptions = useWheelOptions(event.id, 'penalty')
   const challengeOptions = useWheelOptions(event.id, 'challenge')
   const customOptions = useWheelOptions(event.id, 'custom')
 
-  const tiedGroups = useMemo(
-    () => findTiedGroups(calculatePlayerTotals(transactions, players)),
-    [transactions, players],
-  )
-
   const editableByMode = { penalty: penaltyOptions, challenge: challengeOptions, custom: customOptions }
+  const includedPlayers = players.filter((p) => !excludedPlayerIds.has(p.id))
 
   const slices =
-    mode === 'tiebreaker'
-      ? (tiedGroups[tieGroupIndex]?.map((r) => r.name) ?? [])
+    mode === 'players'
+      ? includedPlayers.map((p) => p.name)
       : editableByMode[mode].options.map((o) => o.label)
 
-  function handleResult(label) {
+  function handleResult(label, index) {
     setWinner(label)
+    if (mode === 'players') return
+    setPendingOption(editableByMode[mode].options[index])
   }
 
   function handleModeChange(nextMode) {
     setMode(nextMode)
     setWinner(null)
-    setTieGroupIndex(0)
+    setPendingOption(null)
+  }
+
+  function removePlayer(id) {
+    setExcludedPlayerIds((prev) => new Set(prev).add(id))
+  }
+
+  function addPlayerBack(id) {
+    setExcludedPlayerIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+
+  async function handleBonusSubmit({ playerId, points, reason, imageUrl }) {
+    await addTransaction({
+      player_id: playerId,
+      points,
+      reason,
+      image_url: imageUrl,
+      created_by_player_id: activePlayerId,
+    })
+    setPendingOption(null)
   }
 
   return (
@@ -138,29 +324,13 @@ export default function WheelPage() {
         ))}
       </div>
 
-      {mode === 'tiebreaker' ? (
-        <div className="space-y-2">
-          {tiedGroups.length === 0 ? (
-            <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm text-[var(--text-muted)]">
-              No ties right now — everyone's spread out on the leaderboard!
-            </p>
-          ) : (
-            <>
-              <p className="text-xs text-[var(--text-muted)]">Pick which tie to break:</p>
-              <select
-                value={tieGroupIndex}
-                onChange={(e) => setTieGroupIndex(Number(e.target.value))}
-                className="min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 text-sm text-[var(--text-primary)]"
-              >
-                {tiedGroups.map((group, i) => (
-                  <option key={i} value={i}>
-                    {group.map((r) => r.name).join(' vs ')} ({group[0].total} pts)
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
-        </div>
+      {mode === 'players' ? (
+        <PlayerWheelPanel
+          players={players}
+          excludedIds={excludedPlayerIds}
+          onRemove={removePlayer}
+          onAddBack={addPlayerBack}
+        />
       ) : (
         <EditableSliceList
           options={editableByMode[mode].options}
@@ -179,7 +349,28 @@ export default function WheelPage() {
         <div className="rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-dim)] px-4 py-4 text-center">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">The wheel has spoken</p>
           <p className="mt-1 text-xl font-black text-[var(--text-primary)]">{winner}</p>
+          {mode === 'players' && (
+            <button
+              type="button"
+              onClick={() => {
+                const chosen = includedPlayers.find((p) => p.name === winner)
+                if (chosen) removePlayer(chosen.id)
+              }}
+              className="mt-3 rounded-xl border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              Remove from wheel
+            </button>
+          )}
         </div>
+      )}
+
+      {pendingOption && (
+        <WheelBonusModal
+          option={pendingOption}
+          players={players}
+          onSubmit={handleBonusSubmit}
+          onClose={() => setPendingOption(null)}
+        />
       )}
     </section>
   )

@@ -32,10 +32,16 @@ export function useWheelOptions(eventId, mode) {
     refresh()
   }, [refresh])
 
-  async function addOption(label) {
+  async function addOption(label, points) {
     const trimmed = label.trim()
     if (!trimmed || !eventId) return
-    await createWheelOption({ event_id: eventId, mode, label: trimmed })
+    const pointsValue = points === '' || points == null ? null : Number(points)
+    await createWheelOption({
+      event_id: eventId,
+      mode,
+      label: trimmed,
+      points: Number.isFinite(pointsValue) ? pointsValue : null,
+    })
     await refresh()
   }
 

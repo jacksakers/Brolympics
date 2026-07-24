@@ -81,11 +81,16 @@ CREATE TABLE IF NOT EXISTS reactions (
 -- devices for an event (see docs/new_features.txt "Multi-Wheel Engine").
 -- Tiebreaker has no stored rows — it's always computed live from the
 -- leaderboard.
+-- points is an optional point value (positive or negative) awarded when
+-- this slice is spun, prefilled into the follow-up bonus-points popup
+-- (see docs/new_features.txt "Multi-Wheel Engine"); NULL means no
+-- default (the popup starts blank).
 CREATE TABLE IF NOT EXISTS wheel_options (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
   mode TEXT NOT NULL CHECK (mode IN ('penalty', 'challenge', 'custom')),
   label TEXT NOT NULL,
+  points INTEGER,
   position INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

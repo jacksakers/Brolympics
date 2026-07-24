@@ -110,29 +110,38 @@ export default function LeaderboardPage() {
       <ol className="space-y-2">
         {rankings.map((entrant, index) => {
           const style = RANK_STYLES[index]
+          const teamMembers =
+            activeView === 'teams' ? players.filter((p) => p.team_id === entrant.id) : []
           return (
             <li
               key={entrant.id}
-              className={`flex items-center gap-3 rounded-xl border p-4 transition-colors ${
+              className={`rounded-xl border p-4 transition-colors ${
                 style ? style.bg : 'border-[var(--border)] bg-[var(--bg-card)]'
               }`}
             >
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ${
-                  style ? `${style.text} ring-1 ring-current` : 'text-[var(--text-secondary)]'
-                }`}
-              >
-                {style ? style.label : index + 1}
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ${
+                    style ? `${style.text} ring-1 ring-current` : 'text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {style ? style.label : index + 1}
+                </div>
+                <RankAvatar
+                  entrant={entrant}
+                  onExpand={(url, name) => setExpandedAvatar({ url, name })}
+                />
+                <span className="flex-1 font-semibold text-[var(--text-primary)]">{entrant.name}</span>
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-xl font-black ${style ? style.text : 'text-[var(--accent)]'}`}>{entrant.total}</span>
+                  <span className="text-xs text-[var(--text-muted)]">pts</span>
+                </div>
               </div>
-              <RankAvatar
-                entrant={entrant}
-                onExpand={(url, name) => setExpandedAvatar({ url, name })}
-              />
-              <span className="flex-1 font-semibold text-[var(--text-primary)]">{entrant.name}</span>
-              <div className="flex items-baseline gap-1">
-                <span className={`text-xl font-black ${style ? style.text : 'text-[var(--accent)]'}`}>{entrant.total}</span>
-                <span className="text-xs text-[var(--text-muted)]">pts</span>
-              </div>
+              {activeView === 'teams' && teamMembers.length > 0 && (
+                <p className="mt-2 truncate pl-11 text-xs text-[var(--text-muted)]">
+                  {teamMembers.map((p) => p.name).join(', ')}
+                </p>
+              )}
             </li>
           )
         })}
