@@ -186,3 +186,20 @@ export function resetWheelOptions(eventId, mode) {
     body: JSON.stringify({ event_id: eventId, mode }),
   })
 }
+
+// --- Point presets -------------------------------------------------------
+
+/** @param {number} eventId */
+export function fetchPresets(eventId) {
+  return request(`/presets?event_id=${eventId}`)
+}
+
+/** @param {{event_id: number, label: string, points: number}} data */
+export function createPreset(data) {
+  return request('/presets', { method: 'POST', body: JSON.stringify(data) })
+}
+
+/** @param {number} id */
+export function deletePreset(id) {
+  return request(`/presets/${id}`, { method: 'DELETE' })
+}

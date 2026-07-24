@@ -90,9 +90,21 @@ CREATE TABLE IF NOT EXISTS wheel_options (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Quick-fill point presets (label + point value) for the Bonus page,
+-- shared across all devices for an event.
+CREATE TABLE IF NOT EXISTS point_presets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  points INTEGER NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_teams_event ON teams (event_id);
 CREATE INDEX IF NOT EXISTS idx_players_event ON players (event_id);
 CREATE INDEX IF NOT EXISTS idx_games_event ON games (event_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_event ON transactions (event_id);
 CREATE INDEX IF NOT EXISTS idx_reactions_transaction ON reactions (transaction_id);
 CREATE INDEX IF NOT EXISTS idx_wheel_options_event_mode ON wheel_options (event_id, mode);
+CREATE INDEX IF NOT EXISTS idx_point_presets_event ON point_presets (event_id);

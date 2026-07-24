@@ -12,6 +12,7 @@ import transactionsRouter from './routes/transactions.js'
 import reactionsRouter from './routes/reactions.js'
 import uploadsRouter from './routes/uploads.js'
 import wheelOptionsRouter from './routes/wheelOptions.js'
+import presetsRouter from './routes/presets.js'
 import fs from 'node:fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -41,6 +42,7 @@ app.use('/api/transactions', transactionsRouter)
 app.use('/api/reactions', reactionsRouter)
 app.use('/api/uploads', uploadsRouter)
 app.use('/api/wheel-options', wheelOptionsRouter)
+app.use('/api/presets', presetsRouter)
 app.use('/uploads', express.static(uploadsDir))
 
 // In production, serve the built Vite client as static assets.

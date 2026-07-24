@@ -13,7 +13,7 @@ export default function BonusPage() {
   const { teams } = useTeams(event.id)
   const { players } = usePlayers(event.id)
   const { addTransaction, error } = useTransactions(event.id)
-  const { presets } = usePresets()
+  const { presets } = usePresets(event.id)
   const { activePlayerId } = usePlayerIdentity()
 
   const hasTeams = teams.length > 0

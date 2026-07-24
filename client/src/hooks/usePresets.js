@@ -1,38 +1,41 @@
-import { useState, useEffect } from 'react'
-
-const STORAGE_KEY = 'brolympics_presets'
+import { useCallback, useEffect, useState } from 'react'
+import { fetchPresets, createPreset, deletePreset } from '../lib/api.js'
 
 /**
- * Manages user-defined quick-award point presets (label + point value),
- * persisted to localStorage since they're a personal convenience feature
- * rather than event data (see docs/coding_guidelines.md).
+ * Manages user-defined quick-award point presets (label + point value)
+ * for an event, stored server-side so every device sees the same list
+ * (see docs/coding_guidelines.md §4 "Stateless Frontend").
+ *
+ * @param {number|undefined} eventId
  */
-export function usePresets() {
-  const [presets, setPresets] = useState(() => {
+export function usePresets(eventId) {
+  const [presets, setPresets] = useState([])
+  const [isLoading, setIsLoading] = useState(Boolean(eventId))
+
+  const refresh = useCallback(async () => {
+    if (!eventId) return
+    setIsLoading(true)
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []
-    } catch {
-      return []
+      setPresets(await fetchPresets(eventId))
+    } finally {
+      setIsLoading(false)
     }
-  })
+  }, [eventId])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
-  }, [presets])
+    refresh()
+  }, [refresh])
 
-  // Prefer the standards-compliant randomUUID when available (requires
-  // a secure context), with a time+random fallback for plain HTTP dev.
-  function genId() {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID()
-    }
-    return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  async function addPreset(label, points) {
+    if (!eventId) return
+    await createPreset({ event_id: eventId, label, points: Number(points) })
+    await refresh()
   }
 
-  const addPreset = (label, points) =>
-    setPresets((prev) => [...prev, { id: genId(), label, points: Number(points) }])
+  async function removePreset(id) {
+    await deletePreset(id)
+    await refresh()
+  }
 
-  const removePreset = (id) => setPresets((prev) => prev.filter((p) => p.id !== id))
-
-  return { presets, addPreset, removePreset }
+  return { presets, isLoading, addPreset, removePreset }
 }

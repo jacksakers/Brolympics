@@ -10,8 +10,8 @@ import PlayersSection from '../components/settings/PlayersSection.jsx'
 import GamesSection from '../components/settings/GamesSection.jsx'
 import { Settings, Bookmark, Plus, X, Sliders, LogOut } from 'lucide-react'
 
-function PresetsSection() {
-  const { presets, addPreset, removePreset } = usePresets()
+function PresetsSection({ eventId }) {
+  const { presets, addPreset, removePreset } = usePresets(eventId)
   const [label, setLabel] = useState('')
   const [points, setPoints] = useState('')
 
@@ -130,8 +130,8 @@ export default function SettingsPage() {
         assignPlayerTeam={playersState.assignPlayerTeam}
       />
       <GamesSection eventId={event.id} teams={teamsState.teams} players={playersState.players} />
-      <PresetsSection />
-      <CustomizationSection />
+      <PresetsSection eventId={event.id} />
+      {/* <CustomizationSection /> */}
 
       <button
         type="button"
