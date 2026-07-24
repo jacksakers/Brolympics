@@ -46,6 +46,11 @@ export function usePlayers(eventId) {
     await refresh()
   }
 
+  async function editPlayer(id, data) {
+    await updatePlayer(id, data)
+    await refresh()
+  }
+
   async function assignPlayerTeam(id, teamId) {
     await updatePlayer(id, { team_id: teamId })
     await refresh()
@@ -62,6 +67,7 @@ export function usePlayers(eventId) {
     error,
     addPlayer,
     renamePlayer,
+    editPlayer,
     assignPlayerTeam,
     removePlayer,
   }

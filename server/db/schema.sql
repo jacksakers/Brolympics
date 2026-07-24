@@ -44,6 +44,9 @@ CREATE TABLE IF NOT EXISTS games (
 -- Every score/bonus is a transaction. Reverting never deletes a row;
 -- instead a new transaction with negated points is inserted and linked via
 -- reverts_transaction_id, preserving a full audit trail.
+-- created_by_player_id records which device/player logged the entry (the
+-- "Who Am I?" local identity, see docs/new_features.txt), for attribution
+-- in the History feed — independent of who the points were awarded to.
 CREATE TABLE IF NOT EXISTS transactions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
@@ -53,12 +56,26 @@ CREATE TABLE IF NOT EXISTS transactions (
   points INTEGER NOT NULL,
   reason TEXT NOT NULL,
   image_url TEXT,
+  created_by_player_id INTEGER REFERENCES players (id) ON DELETE SET NULL,
   reverts_transaction_id INTEGER REFERENCES transactions (id),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   CHECK (player_id IS NOT NULL OR team_id IS NOT NULL)
+);
+
+-- Emoji reactions on History feed entries, keyed to the reacting player's
+-- local "Who Am I?" identity. The UNIQUE constraint prevents a player
+-- from spamming the same emoji on the same entry repeatedly.
+CREATE TABLE IF NOT EXISTS reactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  transaction_id INTEGER NOT NULL REFERENCES transactions (id) ON DELETE CASCADE,
+  player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
+  emoji TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (transaction_id, player_id, emoji)
 );
 
 CREATE INDEX IF NOT EXISTS idx_teams_event ON teams (event_id);
 CREATE INDEX IF NOT EXISTS idx_players_event ON players (event_id);
 CREATE INDEX IF NOT EXISTS idx_games_event ON games (event_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_event ON transactions (event_id);
+CREATE INDEX IF NOT EXISTS idx_reactions_transaction ON reactions (transaction_id);

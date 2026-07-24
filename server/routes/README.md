@@ -11,10 +11,16 @@ and is mounted in [../index.js](../index.js).
 - `players.js` — full CRUD at `/api/players`, list via `?event_id=`.
 - `games.js` — full CRUD at `/api/games`, list via `?event_id=`.
 - `transactions.js` — `GET /api/transactions?event_id=` (audit log /
-  leaderboard source), `POST /api/transactions` (score/bonus), and
-  `POST /api/transactions/:id/revert` (compensating transaction — see
+  leaderboard source), `POST /api/transactions` (score/bonus, optionally
+  carrying `image_url` photo proof and `created_by_player_id` for
+  device-identity attribution), and `POST /api/transactions/:id/revert`
+  (compensating transaction — see
   [docs/coding_guidelines.md](../../docs/coding_guidelines.md) on
   immutability of history).
+- `reactions.js` — `GET /api/reactions?event_id=` and `POST /api/reactions`
+  (toggles an emoji reaction from a player on a History feed entry).
+- `uploads.js` — `POST /api/uploads` (multipart image upload, used for
+  player avatars and score/bonus photo proof; returns `{ url }`).
 
 ## Conventions
 

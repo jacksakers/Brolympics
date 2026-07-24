@@ -12,6 +12,34 @@ const RANK_STYLES = [
   { bg: 'bg-orange-400/10 border-orange-400/20', text: 'text-orange-400', label: '3rd' },
 ]
 
+/** Player photo, or a small stack of team member photos, for a leaderboard row. */
+function RankAvatar({ entrant }) {
+  const avatars = entrant.image_url ? [entrant.image_url] : entrant.memberAvatars ?? []
+
+  if (avatars.length === 0) {
+    return (
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-dim)] text-[var(--accent)]">
+        <User size={14} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex -space-x-3">
+      {avatars.map((url, i) => (
+        <img
+          key={url + i}
+          src={url}
+          alt=""
+          className="h-8 w-8 rounded-full border-2 border-[var(--bg-card)] object-cover"
+          style={{ zIndex: avatars.length - i }}
+          onError={(e) => (e.target.style.display = 'none')}
+        />
+      ))}
+    </div>
+  )
+}
+
 export default function LeaderboardPage() {
   const { event } = useEvent()
   const { teams, isLoading: teamsLoading } = useTeams(event.id)
@@ -89,6 +117,7 @@ export default function LeaderboardPage() {
               >
                 {style ? style.label : index + 1}
               </div>
+              <RankAvatar entrant={entrant} />
               <span className="flex-1 font-semibold text-[var(--text-primary)]">{entrant.name}</span>
               <div className="flex items-baseline gap-1">
                 <span className={`text-xl font-black ${style ? style.text : 'text-[var(--accent)]'}`}>{entrant.total}</span>

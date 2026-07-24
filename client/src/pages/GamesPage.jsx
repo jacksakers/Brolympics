@@ -4,6 +4,7 @@ import { useGames } from '../hooks/useGames.js'
 import { useTeams } from '../hooks/useTeams.js'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { useTransactions } from '../hooks/useTransactions.js'
+import { usePlayerIdentity } from '../context/PlayerIdentityContext.jsx'
 import GameScoreForm from '../components/games/GameScoreForm.jsx'
 import { Gamepad2, ChevronDown, ChevronUp, BookOpen, Users, User } from 'lucide-react'
 
@@ -13,6 +14,7 @@ export default function GamesPage() {
   const { teams } = useTeams(event.id)
   const { players } = usePlayers(event.id)
   const { addTransaction } = useTransactions(event.id)
+  const { activePlayerId } = usePlayerIdentity()
   const [selectedGameId, setSelectedGameId] = useState(null)
 
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? null
@@ -20,13 +22,15 @@ export default function GamesPage() {
     ? selectedGame.format === 'team' ? teams : players
     : []
 
-  async function handleSubmitScores(scores) {
+  async function handleSubmitScores(scores, imageUrl) {
     for (const { entrantId, points } of scores) {
       await addTransaction({
         game_id: selectedGame.id,
         [selectedGame.format === 'team' ? 'team_id' : 'player_id']: entrantId,
         points,
         reason: selectedGame.name,
+        image_url: imageUrl,
+        created_by_player_id: activePlayerId,
       })
     }
   }

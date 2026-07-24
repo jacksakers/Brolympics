@@ -35,23 +35,46 @@ Outputs static assets to `dist/`, which the server serves in production.
 - `src/context/EventContext.jsx` — global event state (create/join/leave),
   backed by `src/hooks/useEventCode.js` (localStorage persistence per
   docs/SDD.md §3).
+- `src/context/PlayerIdentityContext.jsx` — the "Who Am I?" device
+  identity (localStorage per event, see docs/new_features.txt #1):
+  which player this phone belongs to, used to attribute logged scores
+  (`created_by_player_id`) and reactions. `WhoAmIModal.jsx` is the
+  picker UI; an avatar chip in `DashboardLayout` reopens it to switch.
 - `src/lib/api.js` — thin fetch wrapper for the `/api` backend, including
-  CRUD calls for teams/players/games.
+  CRUD calls for teams/players/games, reactions, and image uploads.
 - `src/hooks/useTeams.js`, `usePlayers.js`, `useGames.js` — data fetching
   + CRUD actions per resource, each refetching from the server after a
   mutation (stateless frontend, per
   [docs/coding_guidelines.md](../docs/coding_guidelines.md)).
+- `src/hooks/useReactions.js` — emoji reactions on History feed entries.
+- `src/hooks/useWheelOptions.js` — editable, per-event slice lists for
+  the Wheel of Destiny (`src/pages/WheelPage.jsx` +
+  `src/components/wheel/SpinningWheel.jsx`), covering Penalty,
+  Challenge, Tiebreaker (auto-computed from leaderboard ties), and
+  Custom modes.
+- `src/utils/compressImage.js` — client-side photo compression (canvas)
+  before upload, so phone camera photos stay small over Tailscale
+  Funnel.
+- `src/utils/generateBalancedTeams.js` — snake-draft team balancing used
+  by `src/components/settings/TeamGeneratorPanel.jsx`.
 - `src/layouts/DashboardLayout.jsx` — guards `/event/*` routes, redirects
   to `/` if there's no valid active event, renders `BottomNav` + tab
-  content.
+  content, and hosts the `PlayerIdentityProvider`.
 - `src/pages/` — `LandingPage` (create/join) and one page per dashboard
-  tab (`LeaderboardPage`, `GamesPage`, `BonusPage`, `HistoryPage`,
-  `SettingsPage`).
-- `src/components/settings/` — `PlayersSection`, `TeamsSection`,
-  `GamesSection` (CRUD UI) and `TurnOrderPanel` (client-side random turn
-  order, not persisted), composed in `SettingsPage`.
+  tab (`LeaderboardPage`, `GamesPage`, `BonusPage`, `WheelPage`,
+  `HistoryPage`, `SettingsPage`).
+- `src/components/settings/` — `PlayersSection` (incl. avatar photo
+  upload), `TeamsSection`, `TeamGeneratorPanel` (balanced/random team
+  split), `GamesSection` (CRUD UI), and `TurnOrderPanel` (client-side
+  random turn order, not persisted), composed in `SettingsPage`.
+- `src/components/PhotoAttach.jsx` — reusable "attach proof photo"
+  control (compress + upload) used by `BonusPage` and `GameScoreForm`.
+- `src/components/ReactionBar.jsx` — emoji reactions for a History
+  entry, gated on having picked a "Who Am I?" identity.
 - `src/utils/generateTurnOrder.js` — Fisher-Yates shuffle helper.
 
-Scoring, leaderboard calculations, and history/undo UI are added in
-Phase 5 per [docs/implementation_plan.md](../docs/implementation_plan.md).
+Scoring and leaderboard calculations live in
+[src/utils/calculateScores.js](src/utils/calculateScores.js); see
+[docs/implementation_plan.md](../docs/implementation_plan.md) for how the
+app was built, phase by phase.
 

@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import PhotoAttach from '../PhotoAttach.jsx'
 import { CheckCircle } from 'lucide-react'
 
 export default function GameScoreForm({ game, entrants, onSubmitScores }) {
   const [points, setPoints] = useState({})
+  const [imageUrl, setImageUrl] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -18,8 +20,9 @@ export default function GameScoreForm({ game, entrants, onSubmitScores }) {
     if (scores.length === 0) return
     setIsSubmitting(true)
     try {
-      await onSubmitScores(scores)
+      await onSubmitScores(scores, imageUrl)
       setPoints({})
+      setImageUrl(null)
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } finally {
@@ -58,13 +61,16 @@ export default function GameScoreForm({ game, entrants, onSubmitScores }) {
       </ul>
 
       {entrants.length > 0 && (
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="min-h-12 w-full rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50 hover:bg-[var(--accent-hover)] transition-colors"
-        >
-          Save Scores
-        </button>
+        <>
+          <PhotoAttach imageUrl={imageUrl} onChange={setImageUrl} />
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="min-h-12 w-full rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-black disabled:opacity-50 hover:bg-[var(--accent-hover)] transition-colors"
+          >
+            Save Scores
+          </button>
+        </>
       )}
     </form>
   )

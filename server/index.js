@@ -9,6 +9,7 @@ import teamsRouter from './routes/teams.js'
 import playersRouter from './routes/players.js'
 import gamesRouter from './routes/games.js'
 import transactionsRouter from './routes/transactions.js'
+import reactionsRouter from './routes/reactions.js'
 import uploadsRouter from './routes/uploads.js'
 import fs from 'node:fs'
 
@@ -36,6 +37,7 @@ app.use('/api/teams', teamsRouter)
 app.use('/api/players', playersRouter)
 app.use('/api/games', gamesRouter)
 app.use('/api/transactions', transactionsRouter)
+app.use('/api/reactions', reactionsRouter)
 app.use('/api/uploads', uploadsRouter)
 app.use('/uploads', express.static(uploadsDir))
 

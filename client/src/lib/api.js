@@ -138,6 +138,18 @@ export function revertTransaction(id) {
   return request(`/transactions/${id}/revert`, { method: 'POST' })
 }
 
+// --- Reactions ---------------------------------------------------------------
+
+/** @param {number} eventId */
+export function fetchReactions(eventId) {
+  return request(`/reactions?event_id=${eventId}`)
+}
+
+/** @param {{transaction_id: number, player_id: number, emoji: string}} data */
+export function toggleReaction(data) {
+  return request('/reactions', { method: 'POST', body: JSON.stringify(data) })
+}
+
 // --- Uploads ----------------------------------------------------------------
 
 /** @param {File} file */

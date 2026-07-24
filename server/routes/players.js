@@ -59,7 +59,7 @@ router.post('/', (req, res) => {
 
 /**
  * PUT /api/players/:id
- * Body: { name?: string, team_id?: number|null }
+ * Body: { name?: string, team_id?: number|null, image_url?: string|null }
  */
 router.put('/:id', (req, res) => {
   const existing = db
@@ -72,10 +72,12 @@ router.put('/:id', (req, res) => {
 
   const name = typeof req.body.name === 'string' ? req.body.name.trim() : existing.name
   const teamId = 'team_id' in req.body ? req.body.team_id : existing.team_id
+  const imageUrl = 'image_url' in req.body ? req.body.image_url : existing.image_url
 
-  db.prepare('UPDATE players SET name = ?, team_id = ? WHERE id = ?').run(
+  db.prepare('UPDATE players SET name = ?, team_id = ?, image_url = ? WHERE id = ?').run(
     name,
     teamId,
+    imageUrl,
     req.params.id,
   )
 

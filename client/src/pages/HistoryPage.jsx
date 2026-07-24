@@ -3,6 +3,9 @@ import { useTeams } from '../hooks/useTeams.js'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { useGames } from '../hooks/useGames.js'
 import { useTransactions } from '../hooks/useTransactions.js'
+import { useReactions } from '../hooks/useReactions.js'
+import { usePlayerIdentity } from '../context/PlayerIdentityContext.jsx'
+import ReactionBar from '../components/ReactionBar.jsx'
 import { formatDateET } from '../utils/formatDate.js'
 import { getEntrantName, getGameName } from '../utils/transactionHelpers.js'
 import { History, Download, RotateCcw, Zap, Gamepad2, Minus } from 'lucide-react'
@@ -56,6 +59,8 @@ export default function HistoryPage() {
   const { players } = usePlayers(event.id)
   const { games } = useGames(event.id)
   const { transactions, isLoading, error, undoTransaction } = useTransactions(event.id)
+  const { reactions, react } = useReactions(event.id)
+  const { activePlayer } = usePlayerIdentity()
 
   const revertedIds = new Set(
     transactions.map((t) => t.reverts_transaction_id).filter((id) => id != null),
@@ -63,6 +68,15 @@ export default function HistoryPage() {
 
   function entrantName(tx) {
     return getEntrantName(tx, players, teams)
+  }
+
+  function loggedByName(tx) {
+    if (!tx.created_by_player_id) return null
+    return players.find((p) => p.id === tx.created_by_player_id)?.name ?? null
+  }
+
+  function reactionsFor(tx) {
+    return reactions.filter((r) => r.transaction_id === tx.id)
   }
 
   function displayReason(tx) {
@@ -141,7 +155,10 @@ export default function HistoryPage() {
                   </div>
                   <p className="text-sm font-semibold text-[var(--text-primary)] leading-snug">{entrantName(tx)}</p>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-snug">{displayReason(tx)}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">{formatDateET(tx.created_at)}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    {formatDateET(tx.created_at)}
+                    {loggedByName(tx) && ` · logged by ${loggedByName(tx)}`}
+                  </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <span className={`text-lg font-black ${tx.points >= 0 ? 'text-[var(--success)]' : 'text-red-400'}`}>
@@ -166,6 +183,10 @@ export default function HistoryPage() {
                   onError={(e) => (e.target.style.display = 'none')}
                 />
               )}
+              <ReactionBar
+                reactions={reactionsFor(tx)}
+                onReact={(emoji) => react(tx.id, activePlayer?.id, emoji)}
+              />
             </li>
           )
         })}

@@ -5,6 +5,7 @@ import { usePlayers } from '../hooks/usePlayers.js'
 import { usePresets } from '../hooks/usePresets.js'
 import { useSettings } from '../hooks/useSettings.js'
 import TeamsSection from '../components/settings/TeamsSection.jsx'
+import TeamGeneratorPanel from '../components/settings/TeamGeneratorPanel.jsx'
 import PlayersSection from '../components/settings/PlayersSection.jsx'
 import GamesSection from '../components/settings/GamesSection.jsx'
 import { Settings, Bookmark, Plus, X, Sliders, LogOut } from 'lucide-react'
@@ -122,6 +123,12 @@ export default function SettingsPage() {
 
       <PlayersSection playersState={playersState} teams={teamsState.teams} />
       <TeamsSection teamsState={teamsState} />
+      <TeamGeneratorPanel
+        eventId={event.id}
+        teams={teamsState.teams}
+        players={playersState.players}
+        assignPlayerTeam={playersState.assignPlayerTeam}
+      />
       <GamesSection eventId={event.id} teams={teamsState.teams} players={playersState.players} />
       <PresetsSection />
       <CustomizationSection />

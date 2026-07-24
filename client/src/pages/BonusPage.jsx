@@ -4,6 +4,8 @@ import { useTeams } from '../hooks/useTeams.js'
 import { usePlayers } from '../hooks/usePlayers.js'
 import { useTransactions } from '../hooks/useTransactions.js'
 import { usePresets } from '../hooks/usePresets.js'
+import { usePlayerIdentity } from '../context/PlayerIdentityContext.jsx'
+import PhotoAttach from '../components/PhotoAttach.jsx'
 import { Zap, Bookmark, Users, User } from 'lucide-react'
 
 export default function BonusPage() {
@@ -12,12 +14,14 @@ export default function BonusPage() {
   const { players } = usePlayers(event.id)
   const { addTransaction, error } = useTransactions(event.id)
   const { presets } = usePresets()
+  const { activePlayerId } = usePlayerIdentity()
 
   const hasTeams = teams.length > 0
   const [entrantType, setEntrantType] = useState('player')
   const [entrantId, setEntrantId] = useState('')
   const [pointsValue, setPointsValue] = useState('')
   const [reason, setReason] = useState('')
+  const [imageUrl, setImageUrl] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -39,10 +43,13 @@ export default function BonusPage() {
         [entrantType === 'team' ? 'team_id' : 'player_id']: Number(entrantId),
         points,
         reason: reason.trim(),
+        image_url: imageUrl,
+        created_by_player_id: activePlayerId,
       })
       setEntrantId('')
       setPointsValue('')
       setReason('')
+      setImageUrl(null)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2000)
     } finally {
@@ -141,6 +148,8 @@ export default function BonusPage() {
             className="min-h-12 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
           />
         </div>
+
+        <PhotoAttach imageUrl={imageUrl} onChange={setImageUrl} />
 
         <button
           type="submit"

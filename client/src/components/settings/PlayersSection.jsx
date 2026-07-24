@@ -1,11 +1,37 @@
-import { useState } from 'react'
-import { Users, Pencil, Trash2, Check } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Users, Pencil, Trash2, Check, Camera, Loader2 } from 'lucide-react'
+import { compressImage } from '../../utils/compressImage.js'
+import { uploadImage } from '../../lib/api.js'
 
 export default function PlayersSection({ playersState, teams }) {
-  const { players, isLoading, error, addPlayer, renamePlayer, assignPlayerTeam, removePlayer } = playersState
+  const { players, isLoading, error, addPlayer, renamePlayer, assignPlayerTeam, removePlayer, editPlayer } = playersState
   const [newPlayerName, setNewPlayerName] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editingName, setEditingName] = useState('')
+  const [uploadingId, setUploadingId] = useState(null)
+  const fileInputRef = useRef(null)
+  const avatarTargetId = useRef(null)
+
+  async function handleAvatarFile(e) {
+    const file = e.target.files?.[0]
+    const playerId = avatarTargetId.current
+    e.target.value = ''
+    if (!file || !playerId) return
+
+    setUploadingId(playerId)
+    try {
+      const compressed = await compressImage(file)
+      const { url } = await uploadImage(compressed)
+      await editPlayer(playerId, { image_url: url })
+    } finally {
+      setUploadingId(null)
+    }
+  }
+
+  function triggerAvatarUpload(playerId) {
+    avatarTargetId.current = playerId
+    fileInputRef.current?.click()
+  }
 
   async function handleAdd(e) {
     e.preventDefault()
@@ -58,14 +84,28 @@ export default function PlayersSection({ playersState, teams }) {
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    {player.image_url && (
-                      <img
-                        src={player.image_url}
-                        alt={player.name}
-                        className="h-8 w-8 rounded-full object-cover"
-                        onError={(e) => (e.target.style.display = 'none')}
-                      />
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => triggerAvatarUpload(player.id)}
+                      className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--bg-base)]"
+                      aria-label={`Change ${player.name}'s photo`}
+                    >
+                      {player.image_url ? (
+                        <img
+                          src={player.image_url}
+                          alt={player.name}
+                          className="h-8 w-8 rounded-full object-cover"
+                          onError={(e) => (e.target.style.display = 'none')}
+                        />
+                      ) : (
+                        <Camera size={13} className="text-[var(--text-muted)]" />
+                      )}
+                      {uploadingId === player.id && (
+                        <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
+                          <Loader2 size={13} className="animate-spin text-white" />
+                        </span>
+                      )}
+                    </button>
                     <span className="font-medium text-[var(--text-primary)]">{player.name}</span>
                   </div>
                   <div className="flex gap-1">
@@ -120,6 +160,15 @@ export default function PlayersSection({ playersState, teams }) {
           Add
         </button>
       </form>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleAvatarFile}
+        className="hidden"
+      />
     </section>
   )
 }

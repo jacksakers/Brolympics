@@ -27,7 +27,7 @@ router.get('/', (req, res) => {
  * Records a score or bonus point transaction. Exactly one of
  * player_id/team_id should be set depending on the game's format (or for
  * a freeform bonus award).
- * Body: { event_id, player_id?, team_id?, game_id?, points, reason }
+ * Body: { event_id, player_id?, team_id?, game_id?, points, reason, image_url?, created_by_player_id? }
  */
 router.post('/', (req, res) => {
   const {
@@ -37,6 +37,8 @@ router.post('/', (req, res) => {
     game_id: gameId = null,
     points,
     reason,
+    image_url: imageUrl = null,
+    created_by_player_id: createdByPlayerId = null,
   } = req.body
 
   if (!eventId) {
@@ -54,10 +56,10 @@ router.post('/', (req, res) => {
 
   const { lastInsertRowid } = db
     .prepare(
-      `INSERT INTO transactions (event_id, player_id, team_id, game_id, points, reason)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transactions (event_id, player_id, team_id, game_id, points, reason, image_url, created_by_player_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run(eventId, playerId, teamId, gameId, points, reason.trim())
+    .run(eventId, playerId, teamId, gameId, points, reason.trim(), imageUrl, createdByPlayerId)
 
   const transaction = db
     .prepare('SELECT * FROM transactions WHERE id = ?')

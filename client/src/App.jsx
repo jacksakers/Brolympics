@@ -5,6 +5,7 @@ import DashboardLayout from './layouts/DashboardLayout.jsx'
 import LeaderboardPage from './pages/LeaderboardPage.jsx'
 import GamesPage from './pages/GamesPage.jsx'
 import BonusPage from './pages/BonusPage.jsx'
+import WheelPage from './pages/WheelPage.jsx'
 import HistoryPage from './pages/HistoryPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 
@@ -21,6 +22,7 @@ function App() {
           <Route index element={<LeaderboardPage />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="bonus" element={<BonusPage />} />
+          <Route path="wheel" element={<WheelPage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

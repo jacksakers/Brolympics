@@ -27,14 +27,15 @@ export function migrate(db) {
   // user input), but we validate against it as a defense-in-depth
   // measure so accidental modifications can't introduce SQL injection.
   const ALLOWED_TABLES = new Set(['games', 'players', 'transactions'])
-  const ALLOWED_COLUMNS = new Set(['rules', 'image_url'])
-  const ALLOWED_DEFINITIONS = new Set(['TEXT'])
+  const ALLOWED_COLUMNS = new Set(['rules', 'image_url', 'created_by_player_id'])
+  const ALLOWED_DEFINITIONS = new Set(['TEXT', 'INTEGER'])
 
   const columnsToAdd = [
     { table: 'games', column: 'rules', definition: 'TEXT' },
     { table: 'games', column: 'image_url', definition: 'TEXT' },
     { table: 'players', column: 'image_url', definition: 'TEXT' },
     { table: 'transactions', column: 'image_url', definition: 'TEXT' },
+    { table: 'transactions', column: 'created_by_player_id', definition: 'INTEGER' },
   ]
   for (const { table, column, definition } of columnsToAdd) {
     if (

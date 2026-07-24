@@ -8,8 +8,8 @@
  * directly (individual-format games and bonus points).
  *
  * @param {Array<{player_id: number|null, points: number}>} transactions
- * @param {Array<{id: number, name: string, team_id: number|null}>} players
- * @returns {Array<{id: number, name: string, team_id: number|null, total: number}>}
+ * @param {Array<{id: number, name: string, team_id: number|null, image_url?: string|null}>} players
+ * @returns {Array<{id: number, name: string, team_id: number|null, image_url: string|null, total: number}>}
  *   Ranked highest total first.
  */
 export function calculatePlayerTotals(transactions, players) {
@@ -17,6 +17,7 @@ export function calculatePlayerTotals(transactions, players) {
     id: player.id,
     name: player.name,
     team_id: player.team_id,
+    image_url: player.image_url ?? null,
     total: transactions
       .filter((t) => t.player_id === player.id)
       .reduce((sum, t) => sum + t.points, 0),
@@ -33,9 +34,10 @@ export function calculatePlayerTotals(transactions, players) {
  *
  * @param {Array<{team_id: number|null, points: number}>} transactions
  * @param {Array<{id: number, name: string}>} teams
- * @param {Array<{id: number, name: string, team_id: number|null}>} players
- * @returns {Array<{id: number, name: string, total: number}>} Ranked
- *   highest total first.
+ * @param {Array<{id: number, name: string, team_id: number|null, image_url?: string|null}>} players
+ * @returns {Array<{id: number, name: string, total: number, memberAvatars: Array<string>}>}
+ *   Ranked highest total first. `memberAvatars` holds up to 4 member photo
+ *   URLs (teams have no photo of their own) for display in the UI.
  */
 export function calculateTeamTotals(transactions, teams, players) {
   const playerTotals = calculatePlayerTotals(transactions, players)
@@ -44,11 +46,14 @@ export function calculateTeamTotals(transactions, teams, players) {
     const directTotal = transactions
       .filter((t) => t.team_id === team.id)
       .reduce((sum, t) => sum + t.points, 0)
-    const memberTotal = playerTotals
-      .filter((p) => p.team_id === team.id)
-      .reduce((sum, p) => sum + p.total, 0)
+    const members = playerTotals.filter((p) => p.team_id === team.id)
+    const memberTotal = members.reduce((sum, p) => sum + p.total, 0)
+    const memberAvatars = members
+      .map((p) => p.image_url)
+      .filter(Boolean)
+      .slice(0, 4)
 
-    return { id: team.id, name: team.name, total: directTotal + memberTotal }
+    return { id: team.id, name: team.name, total: directTotal + memberTotal, memberAvatars }
   })
 
   return totals.sort((a, b) => b.total - a.total)
